@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>King of parsing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#E8ECF3;--surface:#FFFFFF;--surface-2:#E3E8F1;--ink:#16213F;--muted:#5C6784;--gold:#F0B232;--gold-ink:#2B1E00;--wrong:#C63F2A;--hero:#1C337A;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0D1530;--surface:#16214A;--surface-2:#1F2C5C;--ink:#EEF1FA;--muted:#9BA7C8;--gold:#F4BC45;--gold-ink:#241900;--wrong:#FF8A75;--hero:#1B2C69;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0D1530;--surface:#16214A;--surface-2:#1F2C5C;--ink:#EEF1FA;--muted:#9BA7C8;--gold:#F4BC45;--gold-ink:#241900;--wrong:#FF8A75;--hero:#1B2C69;color-scheme:dark}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;display:grid;place-items:center;padding:20px}
+.card{width:100%;max-width:400px;background:var(--surface);border-radius:22px;padding:34px 28px 28px;text-align:center}
+.logo{width:72px;height:72px;display:block;margin:0 auto 14px}
+h1{font-family:"Cinzel","Trajan Pro",Georgia,serif;font-weight:800;font-size:28px;letter-spacing:.01em;word-spacing:-.12em;margin:0 0 6px;line-height:1.1;white-space:nowrap}
+h1 .of{font-size:.62em;font-weight:600;margin:0 .1em}
+p.sub{color:var(--muted);margin:0 0 24px;font-size:15px}
+label{display:block;text-align:left;font-weight:600;font-size:14px;color:var(--muted);margin-bottom:6px}
+input[type=password]{width:100%;font:inherit;font-size:17px;padding:13px 14px;border-radius:12px;border:0;background:var(--surface-2);color:var(--ink)}
+input:focus-visible,button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.remember{display:flex;align-items:center;gap:8px;margin:14px 0 18px;font-size:14px;color:var(--muted);text-align:left}
+.remember input{width:18px;height:18px;accent-color:var(--gold)}
+button{width:100%;border:0;background:var(--gold);color:var(--gold-ink);border-radius:12px;padding:14px;font:inherit;font-weight:700;font-size:16px;cursor:pointer}
+button:disabled{opacity:.6;cursor:default}
+.err{color:var(--wrong);font-size:14px;font-weight:600;min-height:1.4em;margin:12px 0 0}
+</style>
+</head>
+<body>
+<main class="card">
+  <svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><path fill="var(--gold)" d="M2.5 14C3.5 5 11 0.5 20 0.5S36.5 5 37.5 14L32.6 14C31 9.5 26.5 6.6 20 6.6S9 9.5 7.4 14Z"/><path fill="var(--gold)" fill-rule="evenodd" d="M8 17C8 11 13 8 20 8S32 11 32 17L32 28C32 32 29 35.5 25 38.5L15 38.5C11 35.5 8 32 8 28Z M11.5 18.5L18.6 19.4L18.6 26L21.4 26L21.4 19.4L28.5 18.5L28 22L22.6 23.8L22.4 38.5L17.6 38.5L17.4 23.8L12 22Z"/></svg>
+  <h1>King <span class="of">of</span> Parsing</h1>
+  <p class="sub">Ange lösenordet du har fått för att öppna appen.</p>
+  <form id="f" autocomplete="on">
+    <input type="text" name="username" value="king-of-parsing" autocomplete="username" hidden>
+    <label for="pw">Lösenord</label>
+    <input id="pw" type="password" autocomplete="current-password" required autofocus>
+    <label class="remember"><input id="rem" type="checkbox" checked> Kom ihåg mig på den här enheten</label>
+    <button id="go" type="submit">Logga in</button>
+    <p class="err" id="err" role="alert"></p>
+  </form>
+</main>
+<script id="payload" type="application/json">__PAYLOAD__</script>
+<script>
+(function(){
+const P=JSON.parse(document.getElementById('payload').textContent);
+const KEY='kop-key-'+P.id;
+const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+const toB64=buf=>btoa(String.fromCharCode(...new Uint8Array(buf)));
+async function open(key){
+  const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64(P.iv)},key,b64(P.ct));
+  const html=await new Response(new Blob([pt]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+  document.open();document.write(html);document.close();
+}
+async function derive(pw){
+  const base=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',salt:b64(P.salt),iterations:P.iter,hash:'SHA-256'},base,{name:'AES-GCM',length:256},true,['decrypt']);
+}
+// automatic login on remembered devices
+try{const k=localStorage.getItem(KEY);if(k){crypto.subtle.importKey('raw',b64(k),'AES-GCM',true,['decrypt']).then(open).catch(()=>{try{localStorage.removeItem(KEY)}catch(e){}})}}catch(e){}
+const f=document.getElementById('f'),err=document.getElementById('err'),go=document.getElementById('go');
+f.addEventListener('submit',async e=>{
+  e.preventDefault();err.textContent='';go.disabled=true;go.textContent='Låser upp …';
+  try{
+    const key=await derive(document.getElementById('pw').value);
+    const raw=await crypto.subtle.exportKey('raw',key);
+    await crypto.subtle.decrypt({name:'AES-GCM',iv:b64(P.iv)},key,b64(P.ct)); // throws if wrong password
+    if(document.getElementById('rem').checked){try{localStorage.setItem(KEY,toB64(raw))}catch(e){}}
+    await open(key);
+  }catch(x){
+    err.textContent='Fel lösenord. Kontrollera stavningen och försök igen.';
+    go.disabled=false;go.textContent='Logga in';
+  }
+});
+})();
+</script>
+</body>
+</html>
