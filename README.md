@@ -5,7 +5,7 @@ Träna parsning av koine-grekiska substantiv och verb, kapitel för kapitel enli
 ## Funktioner
 
 - Formerna är verkliga former ur Nya testamentet, totalt cirka 8 400 former av 821 glosor.
-- Med kapitelväljaren väljer du både glosor och grammatik. Det högsta valda kapitlet avgör vilka tempus, diates och modus som ingår.
+- Kunskapsnivån och glosorna väljs separat. Du kan till exempel öva på glosor från kapitel 17 med grammatiken t.o.m. kapitel 25. Med automatisk nivå följer grammatiken det högsta valda kapitlet.
 - Tvetydiga former godkänns för alla korrekta parsningar.
 - Efter varje svar visas ett exempel ur NT, där ordet är markerat.
 - I slutet av varje omgång får du en sammanfattning och kan öva på de former du missade.

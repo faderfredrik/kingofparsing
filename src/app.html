@@ -80,6 +80,14 @@ button.pill:hover{background:var(--surface-2)}
 .ch[aria-pressed="true"] .c{color:rgba(255,255,255,.8)}
 .ch:disabled{opacity:.4;cursor:default}
 .ch.wide{grid-column:span 2}
+.ch.lvl{box-shadow:inset 0 0 0 3px var(--gold)}
+.ch .lv{font-size:11px;font-weight:700;color:var(--gold)}
+.ch[aria-pressed="true"] .lv{color:var(--gold)}
+.selwrap{position:relative;display:inline-block;max-width:100%}
+.selwrap::after{content:"";position:absolute;right:16px;top:50%;width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:translateY(-70%) rotate(45deg);pointer-events:none}
+.sel{font:inherit;font-weight:600;font-size:15px;background:var(--surface-2);color:var(--ink);border:0;border-radius:12px;padding:12px 44px 12px 14px;max-width:100%;appearance:none;-webkit-appearance:none;cursor:pointer}
+.sel.manual{box-shadow:inset 0 0 0 3px var(--gold)}
+.lvlnote{font-size:14px;color:var(--muted);margin:10px 0 0}
 .status{display:flex;gap:16px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
 .status p{margin:0;max-width:60ch}
 .status .big{font-size:18px;font-weight:700}
@@ -190,8 +198,14 @@ kbd{font-family:var(--ui);background:var(--surface);border-radius:6px;padding:2p
       </div>
     </section>
     <section class="block">
-      <h2>Kapitel i Mounce</h2>
-      <p class="sub">Klicka för att välja. Håll ned Shift för att välja ett intervall.</p>
+      <h2>Din kunskapsnivå</h2>
+      <p class="sub">Hur långt du har kommit i Mounce. Nivån styr grammatiken, det vill säga vilka tempus, diates, modus och kasus du får parsa. Vilka glosor du övar på väljer du separat nedan.</p>
+      <span class="selwrap"><select id="lvlSel" class="sel" aria-label="Kunskapsnivå"></select></span>
+      <p class="lvlnote" id="lvlNote"></p>
+    </section>
+    <section class="block">
+      <h2>Glosor att öva på</h2>
+      <p class="sub">Välj vilka kapitels glosor som ska ingå. Håll ned Shift för att välja ett intervall. Den guldmarkerade rutan visar din kunskapsnivå.</p>
       <div class="presets">
         <button data-p="all">Alla</button>
         <button data-p="6-14">Kapitel 6–14</button>
@@ -309,7 +323,7 @@ function gramText(lvl){
 function joinSv(a){return a.length<2?a.join(''):a.slice(0,-1).join(', ')+' och '+a[a.length-1]}
 
 /* ---------- settings ---------- */
-let S={types:'NV',chapters:[],len:20};
+let S={types:'NV',chapters:[],len:20,level:0};
 try{const s=JSON.parse(localStorage.getItem('kop-settings')||'null');if(s&&Array.isArray(s.chapters))S=Object.assign(S,s)}catch(e){}
 if(!S.chapters.length) S.chapters=CHAPTERS.filter(c=>c<=25);
 function save(){try{localStorage.setItem('kop-settings',JSON.stringify(S))}catch(e){}}
@@ -317,7 +331,9 @@ let life={a:0,c:0};
 try{const l=JSON.parse(localStorage.getItem('kop-life')||'null');if(l)life=l}catch(e){}
 function saveLife(){try{localStorage.setItem('kop-life',JSON.stringify(life))}catch(e){}}
 
-const level=()=>{const m=Math.max(0,...S.chapters);return m===99?36:m};
+const autoLevel=()=>{const m=Math.max(0,...S.chapters);return m===99?36:m};
+const level=()=>S.level||autoLevel();
+const LEVELS={4:'inga parsingbara former',6:'nominativ och ackusativ',7:'genitiv, dativ och vokativ',8:'prepositioner och εἰμί',9:'adjektiv',10:'tredje deklinationen',11:'personliga pronomen',12:'αὐτός',13:'demonstrativa pronomen',14:'relativt pronomen',15:'introduktion till verb',16:'presens aktiv indikativ',17:'kontraherade verb',18:'presens medium/passiv',19:'futurum aktiv/medium',20:'verbrötter och futurum',21:'imperfekt',22:'andra aorist',23:'första aorist',24:'aorist och futurum passiv',25:'perfekt',26:'introduktion till particip',27:'presens particip',28:'aorist particip',29:'adjektiviska particip',30:'perfekt particip',31:'konjunktiv',32:'infinitiv',33:'imperativ',34:'δίδωμι, indikativ',35:'δίδωμι, övriga modus',36:'ἵστημι, τίθημι, δείκνυμι'};
 
 function buildPool(){
   const lvl=level(),chs=new Set(S.chapters),ws=[];
@@ -339,10 +355,12 @@ function renderSetup(){
   CHAPTERS.forEach(ch=>{
     const n=W.filter(w=>w.ch===ch&&S.types.includes(w.t)).length;
     const b=document.createElement('button');
-    b.className='ch'+(ch===99?' wide':'');
+    const mark=S.level||Math.max(0,...S.chapters);
+    b.className='ch'+(ch===99?' wide':'')+(ch===mark?' lvl':'');
     b.setAttribute('aria-pressed',S.chapters.includes(ch));
     b.disabled=n===0;
-    b.innerHTML=ch===99?`<span class="n" style="font-size:16px;padding-top:3px">Övriga</span><span class="c">${n} ord</span>`:`<span class="n">${ch}</span><span class="c">${n} ord</span>`;
+    const lv=ch===mark?'<span class="lv">nivå</span>':'';
+    b.innerHTML=ch===99?`<span class="n" style="font-size:16px;padding-top:3px">Övriga</span><span class="c">${n} ord</span>${lv}`:`<span class="n">${ch}</span><span class="c">${n} ord</span>${lv}`;
     b.title=ch===99?'Glosor som förekommer minst tio gånger i NT men inte tas upp i bokens kapitel':'Kapitel '+ch;
     b.onclick=e=>{
       if(e.shiftKey&&lastClicked!==null){
@@ -357,7 +375,11 @@ function renderSetup(){
   });
   const pool=buildPool(),nf=pool.reduce((s,p)=>s+p.fs.length,0);
   $('poolLine').textContent=pool.length?`${pool.length} glosor och ${nf.toLocaleString('sv-SE')} former att öva på`:'Inga former att öva på ännu';
-  $('gramLine').textContent=S.chapters.length?gramText(level()):'Välj minst ett kapitel.';
+  $('gramLine').textContent=S.chapters.length||S.level?gramText(level()):'Välj minst ett kapitel.';
+  const sel=$('lvlSel');sel.value=String(S.level);sel.classList.toggle('manual',!!S.level);
+  $('lvlNote').textContent=S.level
+    ?`Du parsar glosorna från de kapitel du väljer nedan med grammatiken t.o.m. kapitel ${S.level}, även om glosorna kommer från tidigare kapitel.`
+    :(S.chapters.length?`Nivån följer det högsta kapitel du väljer nedan, just nu kapitel ${autoLevel()}. Välj en egen nivå om du kan mer grammatik än glosorna du övar på.`:'Nivån följer det högsta kapitel du väljer nedan.');
   const note=$('poolNote');let msg='';
   const lvl=level();
   if(S.types.includes('V')&&S.chapters.length&&lvl<16) msg='Verbformer övas från kapitel 16, där presens indikativ introduceras. Lägg till ett kapitel från 16 och uppåt.';
@@ -368,6 +390,12 @@ function renderSetup(){
 }
 document.querySelectorAll('#typeSeg button').forEach(b=>b.onclick=()=>{S.types=b.dataset.t;save();renderSetup()});
 document.querySelectorAll('#lenSeg button').forEach(b=>b.onclick=()=>{S.len=+b.dataset.l;save();renderSetup()});
+(function(){
+  const sel=$('lvlSel');
+  sel.innerHTML='<option value="0">Automatisk: följer högsta valda kapitel</option>'+
+    Array.from({length:31},(_,i)=>i+6).map(c=>`<option value="${c}">T.o.m. kapitel ${c}: ${LEVELS[c]||''}</option>`).join('');
+  sel.onchange=()=>{S.level=+sel.value;save();renderSetup()};
+})();
 document.querySelectorAll('.presets button').forEach(b=>b.onclick=()=>{
   const p=b.dataset.p;
   if(p==='all')S.chapters=[...CHAPTERS];
