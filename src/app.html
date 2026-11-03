@@ -17,7 +17,7 @@
   --wrong:#C63F2A; --wrong-tint:#F7DCD6; --wrong-ink:#8A2717;
   --focus:#F0B232;
   --greek:"Gentium Book Plus","Gentium Plus","GFS Didot","Noto Serif",Georgia,serif;
-  --ui:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --ui:"Figtree","Gentium Book Plus",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
@@ -103,6 +103,24 @@ button.pill:hover{background:var(--surface-2)}
 .hint:hover{background:rgba(255,255,255,.18)}
 .hint svg{width:16px;height:16px}
 .form{font-family:var(--greek);font-size:clamp(52px,11vw,100px);line-height:1.15;margin:22px 0 4px;word-break:break-word}
+.bd{margin:14px auto 10px;max-width:760px}
+.bd-arrow{display:block;margin:0 auto 6px;width:18px;height:18px;color:var(--hero-muted)}
+.segs{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-end;gap:12px 6px}
+.mseg{display:flex;flex-direction:column;align-items:stretch;min-width:46px;color:#fff;animation:pop .5s cubic-bezier(.2,.9,.3,1.25) both}
+.mseg .lab{font-size:12px;font-weight:700;color:var(--hero-muted);text-align:center;white-space:nowrap;padding:0 2px 9px}
+.mseg .br{height:10px;border:2px solid currentColor;border-bottom:0;border-radius:4px 4px 0 0;position:relative;opacity:.55;margin:0 3px}
+.mseg .br::before{content:"";position:absolute;left:50%;top:-8px;width:2px;height:7px;background:currentColor;transform:translateX(-50%)}
+.mseg .mo{font-family:var(--greek);font-size:34px;line-height:1.2;padding:3px 6px 0;text-align:center}
+.mseg.t-stem{color:var(--hero-ink)}
+.mseg.t-pre,.mseg.t-aug,.mseg.t-red{color:#C9D4F5}
+.plus{color:var(--hero-muted);font-size:22px;line-height:1;padding-bottom:12px;animation:fade .4s both}
+.bdnotes{list-style:none;margin:16px auto 0;padding:14px 16px;max-width:600px;background:rgba(255,255,255,.07);border-radius:14px;color:#DCE3F8;font-size:14.5px;text-align:left;display:grid;gap:6px;animation:fade .5s .3s both}
+.bdnotes li{padding-left:18px;position:relative}
+.bdnotes li::before{content:"";position:absolute;left:3px;top:.55em;width:7px;height:7px;border-radius:50%;background:var(--hero-ink)}
+.bdnone{color:var(--hero-muted);font-size:14px;margin:6px 0 0}
+@keyframes pop{from{opacity:0;transform:translateY(-22px) scale(.8)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@media (max-width:720px){.mseg .mo{font-size:26px}.mseg{min-width:38px}.mseg .lab{font-size:11px}}
 .gloss{color:var(--hero-muted);font-size:15px;min-height:1.5em;max-width:56ch;margin:0 auto}
 .gloss em{font-style:normal;color:#fff}
 .fields{display:grid;gap:12px;grid-template-columns:repeat(6,1fr)}
@@ -111,7 +129,7 @@ button.pill:hover{background:var(--surface-2)}
 .field h3{margin:0 0 10px;font-size:14px;font-weight:600;color:var(--muted)}
 .opts{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(112px,1fr))}
 .opts.lex{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
-.opt{hyphens:auto;overflow-wrap:anywhere;border:0;background:var(--surface-2);border-radius:10px;padding:11px 8px;font-weight:600;font-size:15px;line-height:1.25;min-height:46px;transition:background .12s}
+.opt{hyphens:manual;overflow-wrap:break-word;border:0;background:var(--surface-2);border-radius:10px;padding:11px 8px;font-weight:600;font-size:15px;line-height:1.25;min-height:46px;transition:background .12s}
 .opt small{display:block;font-weight:500;font-size:12px;color:var(--muted);margin-top:2px}
 .opt:hover:not(:disabled){background:var(--surface-3)}
 .opt[aria-pressed="true"]{background:var(--lapis);color:var(--lapis-ink)}
@@ -240,6 +258,7 @@ kbd{font-family:var(--ui);background:var(--surface);border-radius:6px;padding:2p
         <button class="hint" id="hintBtn"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1a5 5 0 0 0-3 9v2h6v-2a5 5 0 0 0-3-9zM6 13.5h4V15H6z" fill="currentColor"/></svg>Ledtråd</button>
       </div>
       <div class="form" id="qForm" lang="grc"></div>
+      <div id="qBreak"></div>
       <p class="gloss" id="qGloss"></p>
     </section>
     <div class="fields" id="fields"></div>
@@ -263,12 +282,13 @@ kbd{font-family:var(--ui);background:var(--surface);border-radius:6px;padding:2p
 const D=JSON.parse(document.getElementById('data').textContent);
 const W=D.words.map((a,i)=>({i,ch:a[0],t:a[1],w:a[2],h:a[3],m:a[4],pp:a[5]}));
 const F=D.forms.map((a,i)=>({i,f:a[0],w:a[1],codes:a[2].split('|'),n:a[3],ref:a[4]}));
+const AN=D.an||[],FA=D.fa||{};
 const byWord={};F.forEach(f=>{(byWord[f.w]=byWord[f.w]||[]).push(f)});
 const CHAPTERS=[...new Set(W.map(w=>w.ch))].sort((a,b)=>a-b);
 const BOOKS=['Matt','Mark','Luk','Joh','Apg','Rom','1 Kor','2 Kor','Gal','Ef','Fil','Kol','1 Tess','2 Tess','1 Tim','2 Tim','Tit','Filem','Hebr','Jak','1 Pet','2 Pet','1 Joh','2 Joh','3 Joh','Jud','Upp'];
 
 const L={
- tense:{P:'Presens',I:'Imperfekt',F:'Futurum',A:'Aorist',X:'Perfekt',Y:'Pluskvamperfekt'},
+ tense:{P:'Presens',I:'Imperfekt',F:'Futurum',A:'Aorist',X:'Perfekt',Y:'Pluskvam\u00adperfekt'},
  voice:{A:'Aktiv',M:'Medium / deponens',P:'Passiv'},
  mood:{I:'Indikativ',S:'Konjunktiv',D:'Imperativ',N:'Infinitiv',P:'Particip'},
  person:{'1':'1:a person','2':'2:a person','3':'3:e person'},
@@ -483,6 +503,7 @@ function renderQuiz(){
   const kind=word.t==='N'?'Substantiv':'Verb';
   $('qCount').textContent=sess.total?`${kind} ${sess.i} av ${sess.total}`:`${kind}, fråga ${sess.i}`;
   $('qForm').textContent=f.f;
+  $('qBreak').innerHTML=q.checked?breakdownHTML():'';
   $('qGloss').innerHTML=q.hint||q.checked?`<em>${esc(word.m)}</em>`:'';
   $('hintBtn').classList.toggle('hidden',q.hint||q.checked);
   renderFields();
@@ -491,6 +512,26 @@ function renderQuiz(){
   setTop('quiz');
   if(q.checked) setActions([{label:sess.total&&sess.i>=sess.total?'Visa resultat':'Nästa ord',primary:true,fn:nextQuestion}],'<kbd>Enter</kbd> för att gå vidare');
   else setActions([{label:'Kontrollera svar',primary:true,fn:check}],'Välj i varje ruta, tryck sedan <kbd>Enter</kbd>');
+}
+const MLAB={pre:'Prefix',aug:'Augment',red:'Reduplikation',stem:'Stam',form:'Tempusform',cv:'Bindevokal'};
+function breakdownHTML(){
+  const m=FA[q.f.i],ix=m?m[q.best]:undefined;
+  if(ix===undefined){
+    const part=q.word.t==='V'&&q.best[2]==='P';
+    return `<p class="bdnone">${part?'Nedbrytning av particip finns inte ännu.':'Den här formen är oregelbunden, så någon nedbrytning visas inte.'}</p>`;
+  }
+  const [ms,notes]=AN[ix];
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let h='<div class="bd"><div class="segs" aria-label="Formens delar">';
+  ms.forEach(([t,x],i)=>{
+    const lab=t==='end'?(q.word.t==='N'?'Kasusändelse':'Ändelse'):MLAB[t];
+    const dl=reduce?0:120+i*110;
+    if(i) h+=`<span class="plus" style="animation-delay:${dl-60}ms" aria-hidden="true">+</span>`;
+    h+=`<div class="mseg t-${t}" style="animation-delay:${dl}ms"><span class="lab">${lab}</span><span class="br"></span><span class="mo" lang="grc">${esc(x||'–')}</span></div>`;
+  });
+  h+='</div>';
+  if(notes.length) h+=`<ul class="bdnotes">${notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul>`;
+  return h+'</div>';
 }
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 

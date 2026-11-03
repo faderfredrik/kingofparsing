@@ -7,6 +7,7 @@ Träna parsning av koine-grekiska substantiv och verb, kapitel för kapitel enli
 - Formerna är verkliga former ur Nya testamentet, totalt cirka 8 400 former av 821 glosor.
 - Kunskapsnivån och glosorna väljs separat. Du kan till exempel öva på glosor från kapitel 17 med grammatiken t.o.m. kapitel 25. Med automatisk nivå följer grammatiken det högsta valda kapitlet.
 - Tvetydiga former godkänns för alla korrekta parsningar.
+- Efter varje svar bryts formen ned i sina delar (prefix, augment, reduplikation, stam, tempusform, bindevokal och ändelse), med förklaringar av ljudförändringarna. Varje nedbrytning är kontrollerad mot den verkliga formen.
 - Efter varje svar visas ett exempel ur NT, där ordet är markerat.
 - I slutet av varje omgång får du en sammanfattning och kan öva på de former du missade.
 - Inställningar och statistik sparas i webbläsaren (localStorage).
@@ -40,6 +41,7 @@ Gamla sparade inloggningar slutar då att fungera.
 | `index.html` | Den färdiga, krypterade appen: en enda fil som innehåller all data |
 | `src/login.html` | Inloggningssidan |
 | `src/app.html` | Mallen, alltså appens HTML, CSS och JavaScript utan data |
+| `scripts/morph.py`, `scripts/analyze.py` | Motorn för morfologisk nedbrytning |
 | `scripts/build.py` | Bygger om `index.html` från FlashWorks och MorphGNT |
 
 Gör så här för att ändra något:

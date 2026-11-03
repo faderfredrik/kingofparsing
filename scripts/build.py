@@ -133,6 +133,11 @@ s=json.dumps(out,ensure_ascii=False,separators=(',',':'))
 open('data.json','w').write(s)
 print(len(W),len(F),len(V),len(s.encode())/1e6)
 
+# ---- steg 2b: morfologisk nedbrytning ----
+sys.path.insert(0,HERE)
+exec(open(os.path.join(HERE,"analyze.py"),encoding="utf8").read(),{"__name__":"__analyze__"})
+_d=json.load(open("data.json",encoding="utf8")); _d.update(json.load(open("morphdata.json",encoding="utf8")))
+open("data.json","w",encoding="utf8").write(json.dumps(_d,ensure_ascii=False,separators=(",",":")))
 s=open(os.path.join(ROOT,"src","app.html"),encoding="utf8").read()
 d=open("data.json",encoding="utf8").read().replace("</","<\\/")
 app=s.replace("__DATA__",d)
