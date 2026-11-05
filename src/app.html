@@ -123,6 +123,8 @@ button.pill:hover{background:var(--surface-2)}
 @media (max-width:720px){.mseg .mo{font-size:26px}.mseg{min-width:38px}.mseg .lab{font-size:11px}}
 .gloss{color:var(--hero-muted);font-size:15px;min-height:1.5em;max-width:56ch;margin:0 auto}
 .gloss em{font-style:normal;color:#fff}
+.gloss em.infl{display:block;font-size:20px;font-weight:600;line-height:1.35}
+.gloss .base{display:block;font-size:13.5px;margin-top:4px}
 .fields{display:grid;gap:12px;grid-template-columns:repeat(6,1fr)}
 .field{background:var(--surface);border-radius:16px;padding:14px 14px 16px;grid-column:span 2;min-width:0}
 .field.w3{grid-column:span 3}.field.w6{grid-column:span 6}.field.w4{grid-column:span 4}
@@ -504,7 +506,8 @@ function renderQuiz(){
   $('qCount').textContent=sess.total?`${kind} ${sess.i} av ${sess.total}`:`${kind}, fråga ${sess.i}`;
   $('qForm').textContent=f.f;
   $('qBreak').innerHTML=q.checked?breakdownHTML():'';
-  $('qGloss').innerHTML=q.hint||q.checked?`<em>${esc(word.m)}</em>`:'';
+  const tr=q.checked?inflTr(word,q.best):null;
+  $('qGloss').innerHTML=tr?`<em class="infl">${esc(tr)}</em><span class="base">Grundbetydelse: ${esc(word.m)}</span>`:(q.hint||q.checked?`<em>${esc(word.m)}</em>`:'');
   $('hintBtn').classList.toggle('hidden',q.hint||q.checked);
   renderFields();
   $('resultBox').innerHTML='';
@@ -533,6 +536,127 @@ function breakdownHTML(){
   if(notes.length) h+=`<ul class="bdnotes">${notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul>`;
   return h+'</div>';
 }
+/* ---------- inflected English translation ---------- */
+const IRR=(()=>{const o={};('be:was:been arise:arose:arisen bear:bore:borne beat:beat:beaten become:became:become beget:begot:begotten begin:began:begun behold:beheld:beheld bind:bound:bound bite:bit:bitten blow:blew:blown break:broke:broken bring:brought:brought build:built:built burn:burned:burned buy:bought:bought cast:cast:cast catch:caught:caught choose:chose:chosen come:came:come cut:cut:cut deal:dealt:dealt dig:dug:dug do:did:done draw:drew:drawn drink:drank:drunk drive:drove:driven dwell:dwelt:dwelt eat:ate:eaten fall:fell:fallen feed:fed:fed feel:felt:felt fight:fought:fought find:found:found flee:fled:fled fly:flew:flown forbid:forbade:forbidden forget:forgot:forgotten forgive:forgave:forgiven forsake:forsook:forsaken freeze:froze:frozen get:got:gotten give:gave:given go:went:gone grind:ground:ground grow:grew:grown hang:hanged:hanged have:had:had hear:heard:heard hide:hid:hidden hit:hit:hit hold:held:held hurt:hurt:hurt keep:kept:kept kneel:knelt:knelt know:knew:known lay:laid:laid lead:led:led lean:leaned:leaned leave:left:left lend:lent:lent let:let:let lie:lay:lain light:lit:lit lose:lost:lost make:made:made mean:meant:meant meet:met:met overcome:overcame:overcome pay:paid:paid put:put:put read:read:read rend:rent:rent ride:rode:ridden ring:rang:rung rise:rose:risen run:ran:run say:said:said see:saw:seen seek:sought:sought sell:sold:sold send:sent:sent set:set:set sew:sewed:sewn shake:shook:shaken shed:shed:shed shine:shone:shone shoot:shot:shot show:showed:shown shut:shut:shut sing:sang:sung sink:sank:sunk sit:sat:sat slay:slew:slain sleep:slept:slept sow:sowed:sown speak:spoke:spoken spend:spent:spent spit:spat:spat spread:spread:spread spring:sprang:sprung stand:stood:stood steal:stole:stolen stick:stuck:stuck sting:stung:stung strike:struck:struck strive:strove:striven swear:swore:sworn sweep:swept:swept swim:swam:swum take:took:taken teach:taught:taught tear:tore:torn tell:told:told think:thought:thought throw:threw:thrown tread:trod:trodden understand:understood:understood wake:woke:woken wear:wore:worn weave:wove:woven weep:wept:wept win:won:won wind:wound:wound withdraw:withdrew:withdrawn withhold:withheld:withheld withstand:withstood:withstood write:wrote:written').split(' ').forEach(x=>{const [a,b,c]=x.split(':');o[a]=[b,c]});return o})();
+const STATIVE=new Set(['be','have','know','want','wish','need','belong','own','possess','seem','resemble']);
+const vow=c=>'aeiou'.includes(c);
+function dbl(v){ // stop -> stopp
+  const m=v.match(/^[^aeiou]*[aeiou][^aeiouwxy]$/);
+  return m?v+v.slice(-1):v;
+}
+function engPast(v){
+  if(IRR[v]) return IRR[v][0];
+  if(v.endsWith('e')) return v+'d';
+  if(/[^aeiou]y$/.test(v)) return v.slice(0,-1)+'ied';
+  return dbl(v)+'ed';
+}
+function engPP(v){ if(IRR[v]) return IRR[v][1]; return engPast(v)}
+function engIng(v){
+  if(v==='be') return 'being';
+  if(v.endsWith('ie')) return v.slice(0,-2)+'ying';
+  if(v.endsWith('e')&&!/(ee|ye|oe)$/.test(v)) return v.slice(0,-1)+'ing';
+  return dbl(v)+'ing';
+}
+function engS3(v){
+  if(v==='be') return 'is'; if(v==='have') return 'has'; if(v==='do') return 'does'; if(v==='go') return 'goes';
+  if(/(s|x|z|ch|sh|o)$/.test(v)) return v+'es';
+  if(/[^aeiou]y$/.test(v)) return v.slice(0,-1)+'ies';
+  return v+'s';
+}
+const SUBJ={'1S':'I','2S':'you (sg.)','3S':'he/she/it','1P':'we','2P':'you (pl.)','3P':'they'};
+function firstSense(m,num){
+  let s=m.replace(/\([^)]*\)/g,' ').replace(/\[[^\]]*\]/g,' ');
+  const sg=s.match(/sg\.?:\s*([^;]+)/i),pl=s.match(/pl\.?:\s*([^;]+)/i);
+  if(num==='P'&&pl) s=pl[1]; else if(sg) s=sg[1];
+  s=s.split(/[;,]/)[0].replace(/\s+/g,' ').trim();
+  return s;
+}
+function pickVoice(m,voice){
+  const seg={};m.split(';').forEach(p=>{const k=p.match(/^\s*(active|middle|passive|intrans|trans|noun)\.?:\s*(.*)$/i);if(k)seg[k[1].toLowerCase()]=k[2]});
+  if(!Object.keys(seg).length) return m;
+  if(voice==='P') return seg.passive||seg.middle||seg.active||seg.intrans||m;
+  if(voice==='M') return seg.middle||seg.active||seg.intrans||m;
+  return seg.active||seg.intrans||seg.noun||m;
+}
+function verbBase(m){
+  const s=firstSense(m);
+  const g=s.match(/^(?:I|to)\s+(.+)$/); if(!g) return null;
+  let w=g[1].split(' '),v=w[0].toLowerCase(),rest=w.slice(1).join(' ');
+  if(v==='am') v='be';
+  if(!/^[a-z]+$/.test(v)) return null;
+  return {v,rest:rest?' '+rest:''};
+}
+function verbTr(word,code){
+  const t=code[0],m=code[2];
+  const segd=pickVoice(word.m,code[1]),hasSeg=segd!==word.m;
+  const b=verbBase(segd); if(!b) return null;
+  const {v,rest}=b;
+  const dep=/μαι$/.test(word.h);
+  const pass=(code[1]==='P'||(code[1]==='M'&&'PIXY'.includes(t)&&!/μαι$/.test(word.h)&&!(hasSeg&&/middle:/i.test(word.m))))&&!dep&&v!=='be'&&!(hasSeg&&/(passive|middle):/i.test(word.m));
+  const pp=engPP(v)+rest;
+  const be=(pn,tense)=>{
+    if(tense==='pres') return {'1S':'am','3S':'is'}[pn]||'are';
+    return (pn==='1S'||pn==='3S')?'was':'were';
+  };
+  if(m==='N'){
+    if(pass) return 'to '+(t==='X'?'have been ':'be ')+pp;
+    if(t==='X') return 'to have '+pp;
+    if(t==='F') return 'to be going to '+v+rest;
+    return 'to '+v+rest;
+  }
+  if(m==='P'){
+    if(pass) return (t==='P'?'being ':'having been ')+pp;
+    if(t==='P') return engIng(v)+rest;
+    return 'having '+pp;
+  }
+  const pn=code.slice(3,5),S=SUBJ[pn],s3=pn==='3S';
+  if(m==='D'){
+    const core=pass?'be '+pp:v+rest;
+    if(pn[0]==='3') return `let ${pn==='3S'?'him/her/it':'them'} ${core}!`;
+    return core+'!'+(pn==='2P'?' (pl.)':'');
+  }
+  if(m==='S') return `${S} might ${pass?'be '+pp:v+rest}`;
+  // indicative
+  let vp;
+  if(t==='P'){
+    if(pass) vp=be(pn,'pres')+' being '+pp;
+    else if(v==='be') vp=be(pn,'pres')+rest;
+    else vp=(s3?engS3(v):v)+rest;
+  } else if(t==='I'){
+    if(pass) vp=be(pn,'past')+' being '+pp;
+    else if(v==='be') vp=be(pn,'past')+rest;
+    else if(STATIVE.has(v)) vp=engPast(v)+rest;
+    else vp=be(pn,'past')+' '+engIng(v)+rest;
+  } else if(t==='F') vp='will '+(pass?'be '+pp:v+rest);
+  else if(t==='A') vp=pass?be(pn,'past')+' '+pp:(v==='be'?be(pn,'past'):engPast(v))+rest;
+  else if(t==='X') vp=(s3?'has':'have')+(pass?' been ':' ')+pp;
+  else if(t==='Y') vp='had'+(pass?' been ':' ')+pp;
+  return S+' '+vp;
+}
+const NIRR={man:'men',woman:'women',child:'children',foot:'feet',tooth:'teeth',sheep:'sheep',fish:'fish',ox:'oxen',mouse:'mice',person:'people',leaf:'leaves',life:'lives',wife:'wives',knife:'knives',thief:'thieves',loaf:'loaves',wolf:'wolves',half:'halves',shelf:'shelves',calf:'calves',goose:'geese',people:'people',heaven:'heavens'};
+function engPl(n){
+  const w=n.split(' '),l=w.pop().toLowerCase();
+  let p=NIRR[l]||(/(s|x|z|ch|sh)$/.test(l)?l+'es':/[^aeiou]y$/.test(l)?l.slice(0,-1)+'ies':l+'s');
+  return [...w,p].join(' ');
+}
+function nounTr(word,code){
+  let s=firstSense(pickVoice(word.m,'A'),code[1]);
+  if(!s||/[^A-Za-z '\-]/.test(s)) return null;
+  const proper=/^[A-Z]/.test(s);
+  s=s.replace(/^(a|an|the)\s+/i,'');
+  const n=code[1]==='P'&&!proper&&!/^the\s/i.test(firstSense(word.m,'P'))&&!(/pl\.?:/i.test(word.m))?engPl(s):s;
+  const np=proper?n:'the '+n;
+  switch(code[0]){
+    case 'N': return np+' (subjekt)';
+    case 'G': return 'of '+np;
+    case 'D': return 'to/for '+np;
+    case 'A': return np+' (objekt)';
+    case 'V': return 'O '+n+'!';
+  }
+  return null;
+}
+function inflTr(word,code){try{return word.t==='N'?nounTr(word,code):verbTr(word,code)}catch(e){return null}}
+
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 
 function renderFields(){

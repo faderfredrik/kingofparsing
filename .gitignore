@@ -1,0 +1,5 @@
+scripts/.cache/
+*.sqlite
+__pycache__/
+*.sqlite*
+.DS_Store
