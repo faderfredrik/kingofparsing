@@ -146,7 +146,12 @@ import getpass,gzip,base64,hashlib
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
-pw=os.environ.get("KOP_PASSWORD") or getpass.getpass("Lösenord för appen: ")
+pw=os.environ.get("KOP_PASSWORD")
+if not pw:
+    pw=getpass.getpass("Lösenord för appen: ")
+    if pw!=getpass.getpass("Skriv lösenordet igen: "):
+        sys.exit("Lösenorden stämmer inte överens. index.html har inte ändrats. Kör bygget igen.")
+if not pw: sys.exit("Tomt lösenord. index.html har inte ändrats.")
 ITER=600000; salt=os.urandom(16); iv=os.urandom(12)
 key=PBKDF2HMAC(algorithm=hashes.SHA256(),length=32,salt=salt,iterations=ITER).derive(pw.encode("utf8"))
 ct=AESGCM(key).encrypt(iv,gzip.compress(app.encode("utf8"),9),None)
