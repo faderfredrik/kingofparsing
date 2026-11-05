@@ -17,25 +17,27 @@ Appen är en enda statisk HTML-fil som publiceras med GitHub Pages. Den har inge
 ### Bygget
 
 ```
-python3 scripts/build.py scripts/FlashWorks.sqlite
+python3 scripts/build.py
 ```
 
 Bygget gör följande steg i tur och ordning:
 
 1. Laddar ned MorphGNT (SBLGNT med parsning) till `scripts/.cache/`.
-2. Matchar Mounces glosor ur `FlashWorks.sqlite` mot de lemman som förekommer i NT.
+2. Matchar Mounces glosor ur `scripts/glosor.sqlite` mot de lemman som förekommer i NT.
 3. Lägger till regler för tvetydiga former och packar datan kompakt.
 4. Kör morfologianalysen och lägger in den i datan.
 5. Infogar datan i `src/app.html`.
 6. Krypterar appen med AES-GCM. Nyckeln tas fram med PBKDF2-SHA256 i 600 000 iterationer.
 7. Lägger in det krypterade paketet i `src/login.html` och skriver resultatet till `index.html`.
 
+Glosorna ligger i `scripts/glosor.sqlite`, som har tabellen `glosor` med kolumnerna `id`, `kapitel`, `typ` (N, V eller U), `ord`, `betydelse`, `principalformer` och `frekvens`.
+
 Bygget kräver `pip install cryptography`. Det tar några minuter, och analyssteget är det som tar längst tid.
 
 ### Regler som aldrig får brytas
 
 - **Lösenordet får aldrig skrivas in i någon fil, något commit-meddelande eller någon kod.** Skriptet frågar efter det med `getpass`, eller läser miljövariabeln `KOP_PASSWORD` som användaren själv sätter i terminalen. Fråga användaren i stället för att gissa.
-- **`FlashWorks.sqlite` får aldrig committas.** Mounces material är upphovsrättsskyddat. Repot är publikt, och därför finns glosorna bara i krypterad form i `index.html`. `.gitignore` utesluter `*.sqlite` och `scripts/.cache/`.
+- **`glosor.sqlite` får aldrig committas.** Mounces material är upphovsrättsskyddat. Repot är publikt, och därför finns glosorna bara i krypterad form i `index.html`. `.gitignore` utesluter `*.sqlite` och `scripts/.cache/`.
 - Bygg alltid om `index.html` efter en ändring i `src/` och committa båda filerna tillsammans.
 
 ### Testa lokalt
@@ -113,6 +115,6 @@ Tvetydiga former får alla korrekta parsningar som godkända svar. Medium och pa
 
 ## Källor
 
-- Glosor: Mounce, FlashWorks.
+- Glosor: Mounce, *Basics of Biblical Greek*.
 - Text: SBL Greek New Testament.
 - Morfologi: MorphGNT (github.com/morphgnt/sblgnt).

@@ -42,17 +42,17 @@ Gamla sparade inloggningar slutar då att fungera.
 | `src/login.html` | Inloggningssidan |
 | `src/app.html` | Mallen, alltså appens HTML, CSS och JavaScript utan data |
 | `scripts/morph.py`, `scripts/analyze.py` | Motorn för morfologisk nedbrytning |
-| `scripts/build.py` | Bygger om `index.html` från FlashWorks och MorphGNT |
+| `scripts/build.py` | Bygger om `index.html` från glosdatabasen och MorphGNT |
 
 Gör så här för att ändra något:
 
 1. Redigera `src/app.html`.
-2. Kör `python3 scripts/build.py sökväg/till/FlashWorks.sqlite`. Skriptet frågar efter lösenordet och kräver Python-paketet `cryptography` (`pip install cryptography`).
+2. Kör `python3 scripts/build.py` med databasen `glosor.sqlite` i mappen `scripts/`. Skriptet frågar efter lösenordet och kräver Python-paketet `cryptography` (`pip install cryptography`).
 
-Skriptet laddar ned MorphGNT automatiskt. Databasen `FlashWorks.sqlite` ingår inte i repot.
+Skriptet laddar ned MorphGNT automatiskt. Databasen `glosor.sqlite` ingår inte i repot.
 
 ## Källor
 
-- Glosor: Bill Mounce, FlashWorks / *Basics of Biblical Greek*.
+- Glosor: Bill Mounce, *Basics of Biblical Greek*.
 - Grekisk text: SBL Greek New Testament (SBLGNT).
 - Morfologi: MorphGNT, https://github.com/morphgnt/sblgnt

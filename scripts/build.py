@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Bygger index.html från FlashWorks.sqlite + MorphGNT (SBLGNT).
-Användning: python3 scripts/build.py sökväg/till/FlashWorks.sqlite
+"""Bygger index.html från glosor.sqlite + MorphGNT (SBLGNT).
+Användning: python3 scripts/build.py [sökväg/till/glosor.sqlite]
 Lösenordet frågas efter vid körning (eller sätts med miljövariabeln KOP_PASSWORD).
 Skriv aldrig in lösenordet i någon fil i repot.
 Skriptet laddar ned MorphGNT automatiskt till scripts/.cache/."""
 import sys,os,io,zipfile,urllib.request
 HERE=os.path.dirname(os.path.abspath(__file__)); ROOT=os.path.dirname(HERE)
-DB=sys.argv[1] if len(sys.argv)>1 else os.path.join(HERE,"FlashWorks.sqlite")
+DB=os.path.abspath(sys.argv[1]) if len(sys.argv)>1 else os.path.join(HERE,"glosor.sqlite")
 CACHE=os.path.join(HERE,".cache"); os.makedirs(CACHE,exist_ok=True)
 ALL=os.path.join(CACHE,"all.txt")
 if not os.path.exists(ALL):
@@ -22,7 +22,7 @@ def nfc(s): return u.normalize('NFC',s.strip())
 def strip(s): return ''.join(c for c in u.normalize('NFD',s) if not u.combining(c)).lower()
 alias={'ἄρχομαι':'ἄρχω','πορεύω':'πορεύομαι','κοιμάω':'κοιμάομαι','κολλάω':'κολλάομαι','προσκαλέω':'προσκαλέομαι','προσλαμβάνω':'προσλαμβάνομαι','σέβω':'σέβομαι','ἐκπλήσσω':'ἐκπλήσσομαι','ἐλεέω':'ἐλεάω','ἐντέλλω':'ἐντέλλομαι','Ᾰδης':'ᾅδης','σατανᾶς':'Σατανᾶς','ἱερόν':'ἱερός','ἀφίστημι':'ἀφίσταμαι'}
 c=sqlite3.connect(DB)
-rows=c.execute("select dbChapter,dbType,dbWord,dbMeaning,dbPrincipalParts,dbFrequency,dbSequence from flash where dbType in ('N','V','U') order by dbChapter,dbSequence").fetchall()
+rows=c.execute("select kapitel,typ,ord,betydelse,principalformer,frekvens,id from glosor where typ in ('N','V','U') order by kapitel,id").fetchall()
 lines=[l.split() for l in open(ALL,encoding='utf8')]
 # words
 words=[];lem2w=collections.defaultdict(list)
