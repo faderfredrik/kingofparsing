@@ -36,13 +36,25 @@ from lexikon import Lexikon
 def nfc(s): return u.normalize('NFC',s.strip())
 lines=[l.split() for l in open(ALL,encoding='utf8')]
 LEX=Lexikon(CACHE,lines,os.path.join(HERE,"glosor_rattelser.tsv"))
+# principalformer: framtagna med greek-inflexion (scripts/generera_principalformer.py) + egna rättelser
+PP={}
+SLOT={'futurum':0,'aorist':1,'perfekt aktiv':2,'perfekt m/p':3,'aorist passiv':4}
+if os.path.exists(os.path.join(HERE,'principalformer.tsv')):
+    for r in csv.DictReader(open(os.path.join(HERE,'principalformer.tsv'),encoding='utf8'),delimiter='\t'):
+        PP[nfc(r['lemma'])]=[x.strip() for x in r['principalformer'].split(',')]
+    rf=os.path.join(HERE,'principalformer_rattelser.tsv')
+    if os.path.exists(rf):
+        for r in csv.DictReader(open(rf,encoding='utf8'),delimiter='\t'):
+            L=nfc(r['lemma'])
+            if L in PP and r['form'] in SLOT: PP[L][SLOT[r['form']]]=nfc(r['värde'])
+def ppfor(L,t): return ', '.join(PP[L]) if t=='V' and L in PP else ''
 # words
 words=[];lem2w=collections.defaultdict(list);noglosa=[]
 for r in csv.DictReader(open(KURS,encoding='utf8'),delimiter='\t'):
     L,head,t,ch=nfc(r['lemma']),nfc(r['uppslagsord']),r['ordklass'],int(r['kapitel'])
     m=LEX.glosa(L,head,t)
     if not m: noglosa.append(head)
-    words.append(dict(ch=ch,t=t,w=LEX.uppslagsord(L,head,t),h=head,m=m,pp=(r.get('principalformer') or '').strip(),L=L))
+    words.append(dict(ch=ch,t=t,w=LEX.uppslagsord(L,head,t),h=head,m=m,pp=ppfor(L,t),L=L))
     lem2w[L].append(len(words)-1)
 # övriga läroböcker: lägg till substantiv och verb som saknas i grundlistan
 KURSER=[('mounce','Mounce','Basics of Biblical Greek'),('duff','Duff','The Elements of New Testament Greek'),('croy','Croy','A Primer of Biblical Greek')]
@@ -58,7 +70,7 @@ for bid,_,_ in KURSER[1:]:
         if t not in ('N','V') or L in lem2w or len(nforms[L])<2: continue   # oböjliga ord hoppas över
         m=LEX.glosa(L,L,t)
         if not m: noglosa.append(L)
-        words.append(dict(ch=99,t=t,w=LEX.uppslagsord(L,L,t),h=L,m=m,pp='',L=L))
+        words.append(dict(ch=99,t=t,w=LEX.uppslagsord(L,L,t),h=L,m=m,pp=ppfor(L,t),L=L))
         lem2w[L].append(len(words)-1)
 if noglosa: print('Saknar glosa:',' '.join(noglosa))
 print(len(words))

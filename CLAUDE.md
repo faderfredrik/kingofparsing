@@ -12,6 +12,7 @@ Appen är en enda statisk HTML-fil som publiceras med GitHub Pages. Den har inge
 | `src/login.html` | Inloggningssidan. Platshållaren `__PAYLOAD__` byts mot den krypterade appen. |
 | `scripts/build.py` | Bygger `index.html` (se nedan). |
 | `scripts/lexikon.py` | Den öppna ordbasen: glosor från STEPBible TBESG, Strong’s-nummer från MACULA Greek och substantivens uppslagsform (genitiv och genus) ur MorphGNT. |
+| `scripts/principalformer.tsv`, `scripts/principalformer_rattelser.tsv` | Principalformer för alla verb (öppna, committas) och egna rättelser. |
 | `scripts/glosor_rattelser.tsv` | Projektets egna rättelser av glosor och uppslagsformer. Den här filen är öppen och committas. |
 | `scripts/exportera_mounce.py` | Engångsskript som skriver Mounces kapitelindelning från `glosor.sqlite` till `kurser/mounce.tsv`. |
 | `kurser/` | Kursfiler med läroböckernas kapitelindelning (`mounce.tsv`, `duff.tsv`, `croy.tsv`) och grammatikordning (`<bok>-grammatik.tsv`). **Committas aldrig.** |
@@ -36,7 +37,9 @@ Bygget gör följande steg i tur och ordning:
 6. Krypterar appen med AES-GCM. Nyckeln tas fram med PBKDF2-SHA256 i 600 000 iterationer.
 7. Lägger in det krypterade paketet i `src/login.html` och skriver resultatet till `index.html`.
 
-Glosorna kommer från öppna källor med CC BY-licens. TBESG-glosan putsas till appens format (”to write”, ”spirit, breath”) och kan ersättas via `glosor_rattelser.tsv`. Kursfilen har kolumnerna `lemma`, `uppslagsord`, `ordklass`, `kapitel` och `principalformer`. Principalformerna kommer tills vidare från Mounce och ska ersättas med fritt framtagna former.
+Glosorna kommer från öppna källor med CC BY-licens. TBESG-glosan putsas till appens format (”to write”, ”spirit, breath”) och kan ersättas via `glosor_rattelser.tsv`. Kursfilen har kolumnerna `lemma`, `uppslagsord`, `ordklass` och `kapitel`. Kolumnen `principalformer` används inte längre.
+
+Principalformerna ligger i `scripts/principalformer.tsv` och tas fram med James Taubers greek-inflexion (MIT) via `scripts/generera_principalformer.py`. Diatesen och vilka tempus som visas styrs av MorphGNT, och ”–” betyder att tempuset inte förekommer i NT. Egna rättelser ligger i `scripts/principalformer_rattelser.tsv`. Generatorn behöver greek-inflexion utcheckat och **körs av användaren själv i terminalen**, eftersom säkerhetsspärren stoppar Claude från att köra kod hämtad från internet. Bygget behöver inte biblioteket.
 
 `scripts/glosor.sqlite` (Mounce) behövs bara för att skapa `kurser/mounce.tsv` med `exportera_mounce.py`.
 
@@ -128,6 +131,7 @@ Tvetydiga former får alla korrekta parsningar som godkända svar. Medium och pa
 
 - Glosor: STEPBible-Data (TBESG), Tyndale House Cambridge och STEPBible.org, CC BY 4.0. Bygger på Abbott-Smith och Middle Liddell.
 - Strong’s-nummer: MACULA Greek, Biblica, CC BY 4.0.
+- Principalformer: genererade med greek-inflexion av James Tauber (MIT-licens).
 - Kapitelindelning: Mounce, *Basics of Biblical Greek* (privat kursfil).
 - Text: SBL Greek New Testament.
 - Morfologi: MorphGNT (github.com/morphgnt/sblgnt).
