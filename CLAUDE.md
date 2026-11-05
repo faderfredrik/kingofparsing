@@ -14,7 +14,7 @@ Appen är en enda statisk HTML-fil som publiceras med GitHub Pages. Den har inge
 | `scripts/lexikon.py` | Den öppna ordbasen: glosor från STEPBible TBESG, Strong’s-nummer från MACULA Greek och substantivens uppslagsform (genitiv och genus) ur MorphGNT. |
 | `scripts/glosor_rattelser.tsv` | Projektets egna rättelser av glosor och uppslagsformer. Den här filen är öppen och committas. |
 | `scripts/exportera_mounce.py` | Engångsskript som skriver Mounces kapitelindelning från `glosor.sqlite` till `kurser/mounce.tsv`. |
-| `kurser/` | Kursfiler med läroböckernas kapitelindelning (`mounce.tsv`, `duff.tsv`, `croy.tsv`). **Committas aldrig.** |
+| `kurser/` | Kursfiler med läroböckernas kapitelindelning (`mounce.tsv`, `duff.tsv`, `croy.tsv`) och grammatikordning (`<bok>-grammatik.tsv`). **Committas aldrig.** |
 | `scripts/morph.py`, `scripts/analyze.py` | Motorn för morfologisk nedbrytning (sprängskissen). |
 | `index.html` | Byggd och krypterad. **Redigera aldrig den här filen för hand.** |
 
@@ -79,8 +79,10 @@ Tvetydiga former får alla korrekta parsningar som godkända svar. Medium och pa
 
 ## Funktioner och regler
 
+- **Lärobok väljs överst** (`S.book`, Mounce, Duff eller Croy). Varje bok har ett kapitel per ord (`D.books[].ch`, 99 = ”Övriga”) och en grammatiktabell (`gram`) som anger i vilket kapitel varje grammatiskt moment introduceras. Momenten har Mounces kapitelnummer som intern nyckel (`MOMENTS` i appen, `MOM` i `build.py`). Grammatiktabellerna ligger i `kurser/<bok>-grammatik.tsv`. Saknas ett moment där väljs nivån manuellt bland momenten i stället. Croys tabell är ifylld från bokens innehållsförteckning. Duffs bygger på kapitelrubrikerna och ordlistan, och några rader är tolkningar (se kolumnen `källa`). Former utanför indikativ (particip, infinitiv, konjunktiv, imperativ) kräver både sitt modusmoment och sitt tempusmoment (`needs` och `tenseKey` i appen), eftersom Croy tar upp infinitiv redan i lektion 2. Inställningarna sparas per bok i `S.by`.
+- Ord från Duff och Croy som inte finns i Mounces lista läggs till automatiskt, utom oböjliga ord.
 - **Kunskapsnivå och glosor väljs separat.** `S.level`, där 0 betyder automatisk, styr grammatiken. Kapitelvalet styr glosorna. Kapitlet som motsvarar nivån får en guldfärgad outline i kapitelrutnätet.
-- **Grammatik per kapitel** (`verbCh` och `nounCh`):
+- **Grammatik per kapitel i Mounce** (`verbCh` och `nounCh` ger momentets nyckel):
 
   | Kapitel | Grammatik som tillkommer |
   |---|---|

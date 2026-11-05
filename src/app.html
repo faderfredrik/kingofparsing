@@ -210,31 +210,30 @@ kbd{font-family:var(--ui);background:var(--surface);border-radius:6px;padding:2p
   <main id="setup">
     <div class="intro">
       <h1>Vad vill du parsa idag?</h1>
-      <p>Formerna kommer från Nya testamentet (SBLGNT) och kapitelindelningen från Mounce, <i>Basics of Biblical Greek</i>. Välj kapitel, så får du bara former och grammatik du har gått igenom.</p>
+      <p>Formerna kommer från Nya testamentet (SBLGNT). Välj lärobok och kapitel, så får du bara former och grammatik du har gått igenom.</p>
     </div>
     <section class="block">
+      <h2>Lärobok</h2>
+      <p class="sub" id="bookSub"></p>
+      <div class="seg" id="bookSeg" role="group" aria-label="Lärobok"></div>
+    </section>
+    <section class="block">
       <h2>Ordklass</h2>
-      <p class="sub">Verb kan övas från kapitel 16, substantiv från kapitel 6.</p>
+      <p class="sub" id="typeSub"></p>
       <div class="seg" id="typeSeg" role="group" aria-label="Ordklass">
         <button data-t="N">Substantiv</button><button data-t="V">Verb</button><button data-t="NV">Båda</button>
       </div>
     </section>
     <section class="block">
       <h2>Din kunskapsnivå</h2>
-      <p class="sub">Hur långt du har kommit i Mounce. Nivån styr grammatiken, det vill säga vilka tempus, diates, modus och kasus du får parsa. Vilka glosor du övar på väljer du separat nedan.</p>
+      <p class="sub"><span id="lvlBook"></span> Nivån styr grammatiken, det vill säga vilka tempus, diates, modus och kasus du får parsa. Vilka glosor du övar på väljer du separat nedan.</p>
       <span class="selwrap"><select id="lvlSel" class="sel" aria-label="Kunskapsnivå"></select></span>
       <p class="lvlnote" id="lvlNote"></p>
     </section>
     <section class="block">
       <h2>Glosor att öva på</h2>
-      <p class="sub">Välj vilka kapitels glosor som ska ingå. Håll ned Shift för att välja ett intervall. Den guldmarkerade rutan visar din kunskapsnivå.</p>
-      <div class="presets">
-        <button data-p="all">Alla</button>
-        <button data-p="6-14">Kapitel 6–14</button>
-        <button data-p="16-25">Kapitel 16–25</button>
-        <button data-p="27-36">Kapitel 27–36</button>
-        <button data-p="none">Rensa</button>
-      </div>
+      <p class="sub">Välj vilka kapitels glosor som ska ingå. Håll ned Shift för att välja ett intervall.<span id="goldNote"> Den guldmarkerade rutan visar din kunskapsnivå.</span></p>
+      <div class="presets" id="presets"></div>
       <div class="chgrid" id="chGrid"></div>
     </section>
     <section class="block">
@@ -289,7 +288,13 @@ const W=D.words.map((a,i)=>({i,ch:a[0],t:a[1],w:a[2],h:a[3],m:a[4],pp:a[5]}));
 const F=D.forms.map((a,i)=>({i,f:a[0],w:a[1],codes:a[2].split('|'),n:a[3],ref:a[4]}));
 const AN=D.an||[],FA=D.fa||{};
 const byWord={};F.forEach(f=>{(byWord[f.w]=byWord[f.w]||[]).push(f)});
-const CHAPTERS=[...new Set(W.map(w=>w.ch))].sort((a,b)=>a-b);
+const BOOKLIST=(D.books&&D.books.length?D.books:[{id:'mounce',name:'Mounce',title:'Basics of Biblical Greek',ch:W.map(w=>w.ch),gram:null}]);
+let B=BOOKLIST[0],CHAPTERS=[];
+function useBook(id){
+  B=BOOKLIST.find(b=>b.id===id)||BOOKLIST[0];
+  W.forEach(w=>{w.ch=B.ch[w.i]});
+  CHAPTERS=[...new Set(W.map(w=>w.ch))].sort((a,b)=>a-b);
+}
 const BOOKS=['Matt','Mark','Luk','Joh','Apg','Rom','1 Kor','2 Kor','Gal','Ef','Fil','Kol','1 Tess','2 Tess','1 Tim','2 Tim','Tit','Filem','Hebr','Jak','1 Pet','2 Pet','1 Joh','2 Joh','3 Joh','Jud','Upp'];
 
 const L={
@@ -321,50 +326,80 @@ function verbCh(c){
   if(m==='D') return 33;
   return 99;
 }
-const learned=(type,code,lvl)=>(type==='N'?nounCh(code):verbCh(code))<=lvl;
-function availOpts(type,lvl){
-  if(type==='N') return {case:lvl>=7?'NGDAV':'NA',number:'SP',gender:'MFN'};
-  const o={tense:'P'+(lvl>=21?'I':'')+(lvl>=19?'F':'')+(lvl>=22?'A':'')+(lvl>=25?'XY':''),
-    voice:'A'+(lvl>=18?'MP':''),
-    mood:'I'+(lvl>=31?'S':'')+(lvl>=33?'D':'')+(lvl>=32?'N':'')+(lvl>=27?'P':''),
+/* Grammatiska moment. Nyckeln är Mounces kapitel; varje lärobok anger sitt eget kapitel per moment. */
+const MOMENTS=[[6,'nominativ och ackusativ'],[7,'genitiv, dativ och vokativ'],[16,'presens aktiv indikativ'],[18,'presens medium/passiv'],[19,'futurum aktiv/medium'],[21,'imperfekt'],[22,'aorist aktiv/medium'],[24,'aorist och futurum passiv'],[25,'perfekt och pluskvamperfekt'],[27,'presens particip'],[28,'aorist particip'],[30,'perfekt particip'],[31,'konjunktiv'],[32,'infinitiv'],[33,'imperativ']];
+/* indikativmomentet för ett tempus och en diates */
+function tenseKey(t,v){if(t==='P')return v==='A'?16:18;if(t==='I')return 21;if(t==='F')return v==='P'?24:19;if(t==='A')return v==='P'?24:22;return 25}
+/* moment som måste vara inlärda för en form: particip, infinitiv m.m. kräver också sitt tempus */
+function needs(type,code){
+  if(type==='N') return [nounCh(code)];
+  const k=verbCh(code);
+  return code[2]==='I'?[k]:[k,tenseKey(code[0],code[1])];
+}
+const learned=(type,code,M)=>needs(type,code).every(k=>M.has(k));
+function availOpts(type,M){
+  const h=k=>M.has(k);
+  if(type==='N') return {case:h(7)?'NGDAV':'NA',number:'SP',gender:'MFN'};
+  const o={tense:'P'+(h(21)?'I':'')+(h(19)||h(24)?'F':'')+(h(22)||h(24)||h(28)?'A':'')+(h(25)?'XY':h(30)?'X':''),
+    voice:'A'+(h(18)||h(24)?'MP':''),
+    mood:'I'+(h(31)?'S':'')+(h(33)?'D':'')+(h(32)?'N':'')+(h(27)||h(28)||h(30)?'P':''),
     person:'123',number:'SP',case:'NGDAV',gender:'MFN'};
   // keep tense order natural
   o.tense=['P','I','F','A','X','Y'].filter(x=>o.tense.includes(x)).join('');
   return o;
 }
-function gramText(lvl){
-  const parts=[];
-  if(lvl>=6) parts.push(lvl>=7?'substantiv i alla kasus':'substantiv i nominativ och ackusativ');
-  if(lvl>=16){
-    const t=[];t.push('presens');if(lvl>=19)t.push('futurum');if(lvl>=21)t.push('imperfekt');if(lvl>=22)t.push('aorist');if(lvl>=25)t.push('perfekt');
-    let s='verb i '+joinSv(t)+' indikativ';
-    if(lvl<18) s+=' aktiv';
-    const m=[];if(lvl>=27)m.push('particip');if(lvl>=31)m.push('konjunktiv');if(lvl>=32)m.push('infinitiv');if(lvl>=33)m.push('imperativ');
-    if(m.length) s+=', samt '+joinSv(m);
+function gramText(M){
+  const h=k=>M.has(k),parts=[];
+  if(h(6)||h(7)) parts.push(h(7)?(h(6)?'substantiv i alla kasus':'substantiv i genitiv, dativ och vokativ'):'substantiv i nominativ och ackusativ');
+  const t=[];if(h(16)||h(18))t.push('presens');if(h(19)||h(24))t.push('futurum');if(h(21))t.push('imperfekt');if(h(22)||h(24))t.push('aorist');if(h(25))t.push('perfekt');
+  const m=[];if(h(27)||h(28)||h(30))m.push('particip');if(h(31))m.push('konjunktiv');if(h(32))m.push('infinitiv');if(h(33))m.push('imperativ');
+  if(t.length||m.length){
+    let s=t.length?'verb i '+joinSv(t)+' indikativ':'verb';
+    if(t.length&&!h(18)&&!h(24)) s+=' aktiv';
+    if(m.length) s+=(t.length?', samt ':' i ')+joinSv(m);
     parts.push(s);
   }
-  return parts.length?'Grammatik t.o.m. kapitel '+lvl+': '+joinSv(parts)+'.':'Inga parsingbara former ännu på den här nivån.';
+  const pre=B.gram?'Grammatik t.o.m. kapitel '+level()+': ':'Grammatik: ';
+  return parts.length?pre+joinSv(parts)+'.':'Inga parsingbara former ännu på den här nivån.';
 }
+/* kapitel där ett moment introduceras i vald bok, eller null */
+const momCh=k=>B.gram?B.gram[k]:null;
+const firstCh=ks=>{const c=ks.map(momCh).filter(x=>x!=null);return c.length?Math.min(...c):null};
 function joinSv(a){return a.length<2?a.join(''):a.slice(0,-1).join(', ')+' och '+a[a.length-1]}
 
 /* ---------- settings ---------- */
-let S={types:'NV',chapters:[],len:20,level:0};
+let S={types:'NV',chapters:[],len:20,level:0,book:'mounce',by:{}};
 try{const s=JSON.parse(localStorage.getItem('kop-settings')||'null');if(s&&Array.isArray(s.chapters))S=Object.assign(S,s)}catch(e){}
-if(!S.chapters.length) S.chapters=CHAPTERS.filter(c=>c<=25);
-function save(){try{localStorage.setItem('kop-settings',JSON.stringify(S))}catch(e){}}
+if(!S.by||typeof S.by!=='object') S.by={};
+if(!S.by[S.book]&&S.chapters.length) S.by[S.book]={chapters:S.chapters,level:S.level};
+function defaultChapters(){const c=CHAPTERS.filter(x=>x!==99);return c.slice(0,Math.ceil(c.length*2/3))}
+function switchBook(id){
+  if(CHAPTERS.length) S.by[S.book]={chapters:S.chapters,level:S.level};
+  useBook(id);S.book=B.id;
+  const st=S.by[B.id]||{};
+  S.chapters=(Array.isArray(st.chapters)?st.chapters:defaultChapters()).filter(c=>CHAPTERS.includes(c));
+  S.level=B.gram?(+st.level||0):(+st.level||33);
+}
+switchBook(S.book);
+function save(){S.by[S.book]={chapters:S.chapters,level:S.level};try{localStorage.setItem('kop-settings',JSON.stringify(S))}catch(e){}}
 let life={a:0,c:0};
 try{const l=JSON.parse(localStorage.getItem('kop-life')||'null');if(l)life=l}catch(e){}
 function saveLife(){try{localStorage.setItem('kop-life',JSON.stringify(life))}catch(e){}}
 
-const autoLevel=()=>{const m=Math.max(0,...S.chapters);return m===99?36:m};
+const autoLevel=()=>{const c=S.chapters.filter(x=>x!==99);return S.chapters.includes(99)?Math.max(0,...CHAPTERS.filter(x=>x!==99)):Math.max(0,...c)};
 const level=()=>S.level||autoLevel();
+/* uppsättningen grammatiska moment som är inlärda på nuvarande nivå */
+function momentSet(){
+  if(!B.gram) return new Set(MOMENTS.map(m=>m[0]).filter(k=>k<=(S.level||33)));
+  const lvl=level();return new Set(MOMENTS.map(m=>m[0]).filter(k=>B.gram[k]<=lvl));
+}
 const LEVELS={4:'inga parsingbara former',6:'nominativ och ackusativ',7:'genitiv, dativ och vokativ',8:'prepositioner och εἰμί',9:'adjektiv',10:'tredje deklinationen',11:'personliga pronomen',12:'αὐτός',13:'demonstrativa pronomen',14:'relativt pronomen',15:'introduktion till verb',16:'presens aktiv indikativ',17:'kontraherade verb',18:'presens medium/passiv',19:'futurum aktiv/medium',20:'verbrötter och futurum',21:'imperfekt',22:'andra aorist',23:'första aorist',24:'aorist och futurum passiv',25:'perfekt',26:'introduktion till particip',27:'presens particip',28:'aorist particip',29:'adjektiviska particip',30:'perfekt particip',31:'konjunktiv',32:'infinitiv',33:'imperativ',34:'δίδωμι, indikativ',35:'δίδωμι, övriga modus',36:'ἵστημι, τίθημι, δείκνυμι'};
 
 function buildPool(){
-  const lvl=level(),chs=new Set(S.chapters),ws=[];
+  const M=momentSet(),chs=new Set(S.chapters),ws=[];
   W.forEach(w=>{
     if(!chs.has(w.ch)||!S.types.includes(w.t)) return;
-    const fs=(byWord[w.i]||[]).filter(f=>f.codes.some(c=>learned(w.t,c,lvl)));
+    const fs=(byWord[w.i]||[]).filter(f=>f.codes.some(c=>learned(w.t,c,M)));
     if(fs.length) ws.push({w,fs});
   });
   return ws;
@@ -374,19 +409,28 @@ function buildPool(){
 const $=id=>document.getElementById(id);
 let lastClicked=null;
 function renderSetup(){
+  const bs=$('bookSeg');
+  bs.innerHTML=BOOKLIST.map(b=>`<button data-b="${b.id}" aria-pressed="${b.id===B.id}">${esc(b.name)}</button>`).join('');
+  bs.querySelectorAll('button').forEach(b=>b.onclick=()=>{switchBook(b.dataset.b);lastClicked=null;buildLevelSel();save();renderSetup()});
+  $('bookSub').innerHTML=`<i>${esc(B.title)}</i>. Glosorna och grammatiken följer bokens kapitel.`+(B.gram?'':' Bokens grammatikordning är inte inlagd ännu, så du väljer grammatiken själv.');
+  const nC=momCh(6),vC=momCh(16);
+  $('typeSub').textContent=B.gram?`Verb kan övas från kapitel ${vC}, substantiv från kapitel ${nC}.`:'Välj vilka ordklasser du vill öva på.';
+  $('lvlBook').textContent=B.gram?`Hur långt du har kommit i ${B.name}.`:'Vilken grammatik du har gått igenom.';
+  renderPresets();
+  $('goldNote').hidden=!B.gram;
   document.querySelectorAll('#typeSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.t===S.types));
   document.querySelectorAll('#lenSeg button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.l===S.len));
   const g=$('chGrid');g.innerHTML='';
   CHAPTERS.forEach(ch=>{
     const n=W.filter(w=>w.ch===ch&&S.types.includes(w.t)).length;
     const b=document.createElement('button');
-    const mark=S.level||Math.max(0,...S.chapters);
+    const mark=B.gram?(S.level||Math.max(0,...S.chapters)):-1;
     b.className='ch'+(ch===99?' wide':'')+(ch===mark?' lvl':'');
     b.setAttribute('aria-pressed',S.chapters.includes(ch));
     b.disabled=n===0;
     const lv=ch===mark?'<span class="lv">nivå</span>':'';
     b.innerHTML=ch===99?`<span class="n" style="font-size:16px;padding-top:3px">Övriga</span><span class="c">${n} ord</span>${lv}`:`<span class="n">${ch}</span><span class="c">${n} ord</span>${lv}`;
-    b.title=ch===99?'Glosor som förekommer minst tio gånger i NT men inte tas upp i bokens kapitel':'Kapitel '+ch;
+    b.title=ch===99?'Glosor som inte tas upp i bokens kapitel':'Kapitel '+ch;
     b.onclick=e=>{
       if(e.shiftKey&&lastClicked!==null){
         const [a,z]=[Math.min(lastClicked,ch),Math.max(lastClicked,ch)];
@@ -400,41 +444,58 @@ function renderSetup(){
   });
   const pool=buildPool(),nf=pool.reduce((s,p)=>s+p.fs.length,0);
   $('poolLine').textContent=pool.length?`${pool.length} glosor och ${nf.toLocaleString('sv-SE')} former att öva på`:'Inga former att öva på ännu';
-  $('gramLine').textContent=S.chapters.length||S.level?gramText(level()):'Välj minst ett kapitel.';
-  const sel=$('lvlSel');sel.value=String(S.level);sel.classList.toggle('manual',!!S.level);
-  $('lvlNote').textContent=S.level
+  const M=momentSet();
+  $('gramLine').textContent=S.chapters.length||S.level?gramText(M):'Välj minst ett kapitel.';
+  const sel=$('lvlSel');sel.value=String(S.level);sel.classList.toggle('manual',!!S.level&&!!B.gram);
+  $('lvlNote').textContent=!B.gram
+    ?'Du parsar glosorna från de kapitel du väljer nedan med den grammatik du väljer här.'
+    :S.level
     ?`Du parsar glosorna från de kapitel du väljer nedan med grammatiken t.o.m. kapitel ${S.level}, även om glosorna kommer från tidigare kapitel.`
     :(S.chapters.length?`Nivån följer det högsta kapitel du väljer nedan, just nu kapitel ${autoLevel()}. Välj en egen nivå om du kan mer grammatik än glosorna du övar på.`:'Nivån följer det högsta kapitel du väljer nedan.');
   const note=$('poolNote');let msg='';
-  const lvl=level();
-  if(S.types.includes('V')&&S.chapters.length&&lvl<16) msg='Verbformer övas från kapitel 16, där presens indikativ introduceras. Lägg till ett kapitel från 16 och uppåt.';
-  else if(S.types==='N'&&S.chapters.length&&lvl<6) msg='Substantiv övas från kapitel 6. Lägg till ett senare kapitel.';
+  if(S.types.includes('V')&&S.chapters.length&&!M.has(16)) msg=B.gram?`Verbformer övas från kapitel ${vC}, där presens indikativ introduceras. Lägg till ett kapitel från ${vC} och uppåt.`:'Välj en nivå med verb för att öva verbformer.';
+  else if(S.types==='N'&&S.chapters.length&&!M.has(6)&&!M.has(7)) msg=B.gram?`Substantiv övas från kapitel ${nC}. Lägg till ett senare kapitel.`:'Välj en nivå med substantiv.';
   note.textContent=msg;note.classList.toggle('hidden',!msg);
   setTop('setup');
   setActions([{label:'Starta övning',primary:true,disabled:!pool.length,fn:()=>startSession()}],'');
 }
 document.querySelectorAll('#typeSeg button').forEach(b=>b.onclick=()=>{S.types=b.dataset.t;save();renderSetup()});
 document.querySelectorAll('#lenSeg button').forEach(b=>b.onclick=()=>{S.len=+b.dataset.l;save();renderSetup()});
-(function(){
+function buildLevelSel(){
   const sel=$('lvlSel');
-  sel.innerHTML='<option value="0">Automatisk: följer högsta valda kapitel</option>'+
-    Array.from({length:31},(_,i)=>i+6).map(c=>`<option value="${c}">T.o.m. kapitel ${c}: ${LEVELS[c]||''}</option>`).join('');
+  if(!B.gram){
+    sel.innerHTML=MOMENTS.map(([k,d])=>`<option value="${k}">T.o.m. ${d}</option>`).join('');
+  } else if(B.id==='mounce'){
+    sel.innerHTML='<option value="0">Automatisk: följer högsta valda kapitel</option>'+
+      Array.from({length:31},(_,i)=>i+6).map(c=>`<option value="${c}">T.o.m. kapitel ${c}: ${LEVELS[c]||''}</option>`).join('');
+  } else {
+    const chs=CHAPTERS.filter(c=>c!==99);
+    sel.innerHTML='<option value="0">Automatisk: följer högsta valda kapitel</option>'+
+      chs.map(c=>{let d=MOMENTS.filter(m=>B.gram[m[0]]===c).map(m=>m[1]);if(B.gram[6]===c&&B.gram[7]===c)d=['alla kasus',...d.slice(2)];return `<option value="${c}">T.o.m. kapitel ${c}${d.length?': '+joinSv(d):''}</option>`}).join('');
+  }
   sel.onchange=()=>{S.level=+sel.value;save();renderSetup()};
-})();
-document.querySelectorAll('.presets button').forEach(b=>b.onclick=()=>{
-  const p=b.dataset.p;
-  if(p==='all')S.chapters=[...CHAPTERS];
-  else if(p==='none')S.chapters=[];
-  else{const [a,z]=p.split('-').map(Number);S.chapters=CHAPTERS.filter(c=>c>=a&&c<=z)}
-  save();renderSetup();
-});
+}
+buildLevelSel();
+function renderPresets(){
+  const chs=CHAPTERS.filter(c=>c!==99),n=chs.length,parts=[];
+  for(let i=0;i<3;i++){const a=chs[Math.floor(i*n/3)],z=chs[Math.floor((i+1)*n/3)-1];if(a!=null&&z!=null&&a<=z)parts.push([a,z])}
+  const P=$('presets');
+  P.innerHTML='<button data-p="all">Alla</button>'+parts.map(([a,z])=>`<button data-p="${a}-${z}">Kapitel ${a}–${z}</button>`).join('')+'<button data-p="none">Rensa</button>';
+  P.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    const p=b.dataset.p;
+    if(p==='all')S.chapters=[...CHAPTERS];
+    else if(p==='none')S.chapters=[];
+    else{const [a,z]=p.split('-').map(Number);S.chapters=CHAPTERS.filter(c=>c>=a&&c<=z)}
+    save();renderSetup();
+  });
+}
 
 /* ---------- session ---------- */
 let sess=null,q=null;
 function startSession(retry){if(!Array.isArray(retry))retry=null;
   const pool=buildPool();
   if(!pool.length&&!retry) return;
-  sess={pool,lvl:level(),total:retry?retry.length:S.len,i:0,correct:0,answered:0,misses:[],used:new Set(),retry:retry?[...retry]:null};
+  sess={pool,M:momentSet(),total:retry?retry.length:S.len,i:0,correct:0,answered:0,misses:[],used:new Set(),retry:retry?[...retry]:null};
   show('quiz');nextQuestion();
 }
 function pickForm(){
@@ -448,14 +509,14 @@ function pickForm(){
 }
 function norm(s){return s.normalize('NFD').replace(/[\u0300-\u036f\u1fbd\u1fbf\u1ffe]/g,'').toLowerCase()}
 function distractors(word){
-  const lvl=sess.lvl,pool=sess.pool.map(p=>p.w).filter(w=>w.t===word.t);
+  const pool=sess.pool.map(p=>p.w).filter(w=>w.t===word.t),maxCh=autoLevel();
   const seen=new Set([norm(word.h)]),out=[];
   const tryAdd=list=>{shuffle(list).forEach(w=>{if(out.length<3&&!seen.has(norm(w.h))){seen.add(norm(w.h));out.push(w)}})};
   // prefer look-alikes: same first letter
   const first=norm(word.h)[0];
   tryAdd(pool.filter(w=>norm(w.h)[0]===first));
   tryAdd(pool);
-  tryAdd(W.filter(w=>w.t===word.t&&w.ch<=Math.max(lvl,16)));
+  tryAdd(W.filter(w=>w.t===word.t&&w.ch<=maxCh));
   tryAdd(W.filter(w=>w.t===word.t));
   return shuffle([word,...out]);
 }
@@ -464,8 +525,8 @@ function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Ma
 function nextQuestion(){
   if(sess.total&&sess.i>=sess.total){return renderSummary()}
   const f=pickForm(),word=W[f.w];
-  const acc=f.codes.filter(c=>learned(word.t,c,sess.lvl));
-  q={f,word,acc:acc.length?acc:f.codes,sel:{},checked:false,hint:false,lex:distractors(word),opts:availOpts(word.t,sess.lvl)};
+  const acc=f.codes.filter(c=>learned(word.t,c,sess.M));
+  q={f,word,acc:acc.length?acc:f.codes,sel:{},checked:false,hint:false,lex:distractors(word),opts:availOpts(word.t,sess.M)};
   // preselect single-option fields
   ['tense','voice','mood','case'].forEach(k=>{if(q.opts[k]&&q.opts[k].length===1&&fieldsFor().includes(k))q.sel[k]=q.opts[k]});
   sess.i++;
@@ -684,9 +745,9 @@ function renderFields(){
       avail.forEach(v=>o.appendChild(optBtn(k,v,L[k][v],k==='person'?L.personSub[v]:null,false,avail.length===1)));
     }
     el.appendChild(o);
-    if(k==='mood'&&q.opts.mood.length===1){const n=document.createElement('p');n.className='fnote';n.textContent='Particip, konjunktiv, infinitiv och imperativ läggs till från kapitel 27 och framåt.';el.appendChild(n)}
-    if(k==='voice'&&q.opts.voice.length===1){const n=document.createElement('p');n.className='fnote';n.textContent='Medium och passiv läggs till i kapitel 18.';el.appendChild(n)}
-    if(k==='case'&&t==='N'&&q.opts.case.length===2){const n=document.createElement('p');n.className='fnote';n.textContent='Genitiv, dativ och vokativ läggs till i kapitel 7.';el.appendChild(n)}
+    if(k==='mood'&&q.opts.mood.length===1){const n=document.createElement('p');n.className='fnote';const c=firstCh([27,28,30,31,32,33]);n.textContent=c?`Particip, konjunktiv, infinitiv och imperativ läggs till från kapitel ${c} och framåt.`:'Particip, konjunktiv, infinitiv och imperativ ingår inte i din nivå ännu.';el.appendChild(n)}
+    if(k==='voice'&&q.opts.voice.length===1){const n=document.createElement('p');n.className='fnote';const c=firstCh([18,24]);n.textContent=c?`Medium och passiv läggs till i kapitel ${c}.`:'Medium och passiv ingår inte i din nivå ännu.';el.appendChild(n)}
+    if(k==='case'&&t==='N'&&q.opts.case.length===2){const n=document.createElement('p');n.className='fnote';const c=momCh(7);n.textContent=c?`Genitiv, dativ och vokativ läggs till i kapitel ${c}.`:'Genitiv, dativ och vokativ ingår inte i din nivå ännu.';el.appendChild(n)}
     box.appendChild(el);
   });
 }
@@ -753,7 +814,7 @@ function renderResult(){
         ${others.length?`<span class="also">Kan också parsas som ${esc(joinSv(others.map(c=>describe(c,t).toLowerCase())))}.</span>`:''}</div>
       <div class="entry"><span class="lx" lang="grc">${esc(word.w)}</span>
         ${word.pp&&word.pp.replace(/[–\s,]/g,'')?`<span class="pp" lang="grc">${esc(word.pp)}</span>`:''}
-        <span class="m">${esc(word.m)}${word.ch===99?' (glosa utanför bokens kapitel)':', kapitel '+word.ch}</span></div>
+        <span class="m">${esc(word.m)}${word.ch===99?' (glosa utanför bokens kapitel)':', '+esc(B.name)+' kapitel '+word.ch}</span></div>
       <div class="verse"><div class="ref">Formen förekommer ${times} i NT. Exempel från ${ref}</div><div class="txt" lang="grc">${verse}</div></div>
     </div></section>`;
 }
@@ -768,7 +829,7 @@ function renderSummary(){
       <p style="margin:0 0 8px">${pct} % rätt. Totalt har du parsat ${life.a} former, varav ${life.c} rätt.</p>
     </section>
     ${ms.length?`<section class="block"><h2>Former att öva mer på</h2><p class="sub">${ms.length===1?'En form':ms.length+' former'} blev fel den här omgången.</p>
-    <ul class="misslist">${ms.map(f=>{const w=W[f.w];const acc=f.codes.filter(c=>learned(w.t,c,sess.lvl));return `<li><span class="g" lang="grc">${esc(f.f)}</span><span class="d">${esc(describe((acc[0]||f.codes[0]),w.t))}, av <span lang="grc" style="font-family:var(--greek);font-size:17px;color:var(--ink)">${esc(w.h)}</span></span></li>`}).join('')}</ul></section>`
+    <ul class="misslist">${ms.map(f=>{const w=W[f.w];const acc=f.codes.filter(c=>learned(w.t,c,sess.M));return `<li><span class="g" lang="grc">${esc(f.f)}</span><span class="d">${esc(describe((acc[0]||f.codes[0]),w.t))}, av <span lang="grc" style="font-family:var(--greek);font-size:17px;color:var(--ink)">${esc(w.h)}</span></span></li>`}).join('')}</ul></section>`
     :`<section class="block"><h2>Felfritt</h2><p class="sub" style="margin:0">Alla former rätt. Prova fler kapitel eller en längre omgång.</p></section>`}`;
   setTop('summary');
   const acts=[];

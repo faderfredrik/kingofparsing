@@ -44,6 +44,22 @@ for r in csv.DictReader(open(KURS,encoding='utf8'),delimiter='\t'):
     if not m: noglosa.append(head)
     words.append(dict(ch=ch,t=t,w=LEX.uppslagsord(L,head,t),h=head,m=m,pp=(r.get('principalformer') or '').strip(),L=L))
     lem2w[L].append(len(words)-1)
+# övriga läroböcker: lägg till substantiv och verb som saknas i grundlistan
+KURSER=[('mounce','Mounce','Basics of Biblical Greek'),('duff','Duff','The Elements of New Testament Greek'),('croy','Croy','A Primer of Biblical Greek')]
+KDIR=os.path.dirname(KURS)
+nforms=collections.defaultdict(set)
+for p in lines:
+    if p[1] in ('N-','V-'): nforms[nfc(p[6])].add(nfc(p[5]))
+for bid,_,_ in KURSER[1:]:
+    fn=os.path.join(KDIR,bid+'.tsv')
+    if not os.path.exists(fn): continue
+    for r in csv.DictReader(open(fn,encoding='utf8'),delimiter='\t'):
+        L,t=nfc(r['lemma']),r['ordklass']
+        if t not in ('N','V') or L in lem2w or len(nforms[L])<2: continue   # oböjliga ord hoppas över
+        m=LEX.glosa(L,L,t)
+        if not m: noglosa.append(L)
+        words.append(dict(ch=99,t=t,w=LEX.uppslagsord(L,L,t),h=L,m=m,pp='',L=L))
+        lem2w[L].append(len(words)-1)
 if noglosa: print('Saknar glosa:',' '.join(noglosa))
 print(len(words))
 # forms
@@ -136,7 +152,24 @@ for f in forms:
     bcv,idx=f['r']; refs.add(bcv)
     F.append([f['f'],remap[f['w']],'|'.join(sorted(codes)),f['n'],bcv+'.'+str(idx)])
 V={k:' '.join(verses[k]) for k in sorted(refs)}
-out=dict(words=[[w['ch'],w['t'],w['w'],w['h'],w['m'],w['pp']] for w in W],forms=F,verses=V)
+MOM={'N-NA':6,'N-GDV':7,'V-PAI':16,'V-PMI':18,'V-F':19,'V-I':21,'V-A':22,'V-AP':24,'V-X':25,'V-PtP':27,'V-PtA':28,'V-PtX':30,'V-S':31,'V-N':32,'V-D':33}
+BOOKS=[]
+for bid,name,title in KURSER:
+    fn=os.path.join(KDIR,bid+'.tsv')
+    if not os.path.exists(fn): continue
+    if bid=='mounce': ch=[w['ch'] for w in W]
+    else:
+        bych={}
+        for r in csv.DictReader(open(fn,encoding='utf8'),delimiter='\t'): bych.setdefault(nfc(r['lemma']),int(r['kapitel']))
+        ch=[bych.get(w['L'],99) for w in W]
+    gram=None; gf=os.path.join(KDIR,bid+'-grammatik.tsv')
+    if os.path.exists(gf):
+        g={MOM[r['moment']]:int(r['kapitel']) for r in csv.DictReader(open(gf,encoding='utf8'),delimiter='\t') if r.get('moment') in MOM and (r.get('kapitel') or '').strip().isdigit()}
+        if len(g)==len(MOM): gram=g
+        else: print(f'{bid}: grammatiktabellen är inte komplett ({len(g)} av {len(MOM)} moment), nivån väljs manuellt')
+    BOOKS.append(dict(id=bid,name=name,title=title,ch=ch,gram=gram))
+    print(bid,sum(1 for c in ch if c!=99),'ord med kapitel')
+out=dict(words=[[w['ch'],w['t'],w['w'],w['h'],w['m'],w['pp']] for w in W],forms=F,verses=V,books=BOOKS)
 s=json.dumps(out,ensure_ascii=False,separators=(',',':'))
 open('data.json','w').write(s)
 print(len(W),len(F),len(V),len(s.encode())/1e6)

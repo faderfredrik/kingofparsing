@@ -23,3 +23,14 @@ with open(OUT,"w",encoding="utf8",newline="") as f:
         if t=='N' and word.count(',')<2: continue
         w.writerow([alias.get(head,head),head,t,ch,(pp or '').strip()]); n+=1
 print(f"Skrev {n} ord till {OUT}")
+# Mounces grammatikordning: i vilket kapitel varje moment introduceras
+MOMENT=[('N-NA','nominativ och ackusativ',6),('N-GDV','genitiv, dativ och vokativ',7),('V-PAI','presens aktiv indikativ',16),
+        ('V-PMI','presens medium/passiv indikativ',18),('V-F','futurum aktiv/medium indikativ',19),('V-I','imperfekt indikativ',21),
+        ('V-A','aorist aktiv/medium indikativ',22),('V-AP','aorist och futurum passiv',24),('V-X','perfekt och pluskvamperfekt indikativ',25),
+        ('V-PtP','presens particip',27),('V-PtA','aorist particip',28),('V-PtX','perfekt particip',30),
+        ('V-S','konjunktiv',31),('V-N','infinitiv',32),('V-D','imperativ',33)]
+G=os.path.join(ROOT,"kurser","mounce-grammatik.tsv")
+with open(G,"w",encoding="utf8",newline="") as f:
+    w=csv.writer(f,delimiter="\t",lineterminator="\n"); w.writerow(["moment","beskrivning","kapitel"])
+    for m,d,c in MOMENT: w.writerow([m,d,c])
+print("Skrev",G)
