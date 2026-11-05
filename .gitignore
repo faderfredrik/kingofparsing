@@ -3,3 +3,6 @@ scripts/.cache/
 __pycache__/
 *.sqlite*
 .DS_Store
+
+# Kursfiler med läroböckernas kapitelindelning (ska inte committas)
+kurser/

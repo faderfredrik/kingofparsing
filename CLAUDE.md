@@ -11,6 +11,10 @@ Appen är en enda statisk HTML-fil som publiceras med GitHub Pages. Den har inge
 | `src/app.html` | Själva appen: HTML, CSS och JS. Platshållaren `__DATA__` byts mot data vid bygget. **Här görs nästan alla ändringar.** |
 | `src/login.html` | Inloggningssidan. Platshållaren `__PAYLOAD__` byts mot den krypterade appen. |
 | `scripts/build.py` | Bygger `index.html` (se nedan). |
+| `scripts/lexikon.py` | Den öppna ordbasen: glosor från STEPBible TBESG, Strong’s-nummer från MACULA Greek och substantivens uppslagsform (genitiv och genus) ur MorphGNT. |
+| `scripts/glosor_rattelser.tsv` | Projektets egna rättelser av glosor och uppslagsformer. Den här filen är öppen och committas. |
+| `scripts/exportera_mounce.py` | Engångsskript som skriver Mounces kapitelindelning från `glosor.sqlite` till `kurser/mounce.tsv`. |
+| `kurser/` | Kursfiler med läroböckernas kapitelindelning (`mounce.tsv`, `duff.tsv`, `croy.tsv`). **Committas aldrig.** |
 | `scripts/morph.py`, `scripts/analyze.py` | Motorn för morfologisk nedbrytning (sprängskissen). |
 | `index.html` | Byggd och krypterad. **Redigera aldrig den här filen för hand.** |
 
@@ -20,24 +24,29 @@ Appen är en enda statisk HTML-fil som publiceras med GitHub Pages. Den har inge
 python3 scripts/build.py
 ```
 
+Med `--okrypterad <fil>` skrivs appen okrypterad till en fil utanför repot för lokal test, och `index.html` lämnas orörd. Med `--kurs <fil>` väljs en annan kursfil än `kurser/mounce.tsv`.
+
 Bygget gör följande steg i tur och ordning:
 
-1. Laddar ned MorphGNT (SBLGNT med parsning) till `scripts/.cache/`.
-2. Matchar Mounces glosor ur `scripts/glosor.sqlite` mot de lemman som förekommer i NT.
+1. Laddar ned MorphGNT (SBLGNT med parsning), STEPBible TBESG och MACULA Greek till `scripts/.cache/`.
+2. Läser ordlistan och kapitlen ur kursfilen `kurser/mounce.tsv` och hämtar glosor och uppslagsformer ur den öppna ordbasen (`lexikon.py`).
 3. Lägger till regler för tvetydiga former och packar datan kompakt.
 4. Kör morfologianalysen och lägger in den i datan.
 5. Infogar datan i `src/app.html`.
 6. Krypterar appen med AES-GCM. Nyckeln tas fram med PBKDF2-SHA256 i 600 000 iterationer.
 7. Lägger in det krypterade paketet i `src/login.html` och skriver resultatet till `index.html`.
 
-Glosorna ligger i `scripts/glosor.sqlite`, som har tabellen `glosor` med kolumnerna `id`, `kapitel`, `typ` (N, V eller U), `ord`, `betydelse`, `principalformer` och `frekvens`.
+Glosorna kommer från öppna källor med CC BY-licens. TBESG-glosan putsas till appens format (”to write”, ”spirit, breath”) och kan ersättas via `glosor_rattelser.tsv`. Kursfilen har kolumnerna `lemma`, `uppslagsord`, `ordklass`, `kapitel` och `principalformer`. Principalformerna kommer tills vidare från Mounce och ska ersättas med fritt framtagna former.
+
+`scripts/glosor.sqlite` (Mounce) behövs bara för att skapa `kurser/mounce.tsv` med `exportera_mounce.py`.
 
 Bygget kräver `pip install cryptography`. Det tar några minuter, och analyssteget är det som tar längst tid.
 
 ### Regler som aldrig får brytas
 
 - **Lösenordet får aldrig skrivas in i någon fil, något commit-meddelande eller någon kod.** Skriptet frågar efter det med `getpass`, eller läser miljövariabeln `KOP_PASSWORD` som användaren själv sätter i terminalen. Fråga användaren i stället för att gissa.
-- **`glosor.sqlite` får aldrig committas.** Mounces material är upphovsrättsskyddat. Repot är publikt, och därför finns glosorna bara i krypterad form i `index.html`. `.gitignore` utesluter `*.sqlite` och `scripts/.cache/`.
+- **`glosor.sqlite` och `kurser/` får aldrig committas.** Läroböckernas material är upphovsrättsskyddat. Repot är publikt, och därför finns kapitelindelningen bara i krypterad form i `index.html`. `.gitignore` utesluter `*.sqlite`, `kurser/` och `scripts/.cache/`.
+- Källhänvisningarna längst ned på startsidan krävs av CC BY-licenserna och får inte tas bort.
 - Bygg alltid om `index.html` efter en ändring i `src/` och committa båda filerna tillsammans.
 
 ### Testa lokalt
@@ -94,7 +103,7 @@ Tvetydiga former får alla korrekta parsningar som godkända svar. Medium och pa
 - **Sprängskissen** visas efter ”Kontrollera svar”. Ordet delas upp i Prefix, Augment, Reduplikation, Stam, Tempusform, Bindevokal och Ändelse, eller Kasusändelse för substantiv, med en klammer och etikett över varje del. Under delarna förklaras ljudförändringarna på svenska.
   - Motorn i `morph.py` tar fram de bakomliggande delarna och bygger ihop dem igen med ljudregler. **En nedbrytning sparas bara om den återskapar den verkliga NT-formen exakt.** Den principen ska behållas.
   - Particip, μι-verb, εἰμί, attisk reduplikation och substantiv av typen πόλις saknar ännu nedbrytning.
-- **Böjd översättning** (`inflTr` i `src/app.html`) bygger på Mounces första glosa och engelska böjningsregler. Deponensverb översätts aktivt.
+- **Böjd översättning** (`inflTr` i `src/app.html`) bygger på ordets första glosa och engelska böjningsregler. Deponensverb översätts aktivt.
   - Medium av icke-deponensverb i presens, imperfekt, perfekt och pluskvamperfekt översätts som passiv.
   - För substantiv står ”(subjekt)” eller ”(objekt)” på svenska efter den engelska översättningen.
 - **Lagring:** `localStorage` används för `kop-settings`, `kop-life` och `kop-key-<id>`, där den sista sparar inloggningen för ”kom ihåg mig”. Läsningar och skrivningar är alltid inslagna i try/catch.
@@ -115,6 +124,8 @@ Tvetydiga former får alla korrekta parsningar som godkända svar. Medium och pa
 
 ## Källor
 
-- Glosor: Mounce, *Basics of Biblical Greek*.
+- Glosor: STEPBible-Data (TBESG), Tyndale House Cambridge och STEPBible.org, CC BY 4.0. Bygger på Abbott-Smith och Middle Liddell.
+- Strong’s-nummer: MACULA Greek, Biblica, CC BY 4.0.
+- Kapitelindelning: Mounce, *Basics of Biblical Greek* (privat kursfil).
 - Text: SBL Greek New Testament.
 - Morfologi: MorphGNT (github.com/morphgnt/sblgnt).

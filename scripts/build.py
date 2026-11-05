@@ -1,12 +1,25 @@
 #!/usr/bin/env python3
-"""Bygger index.html från glosor.sqlite + MorphGNT (SBLGNT).
-Användning: python3 scripts/build.py [sökväg/till/glosor.sqlite]
+"""Bygger index.html från öppna källor + en kursfil med kapitelindelning.
+Användning: python3 scripts/build.py [--kurs kurser/mounce.tsv] [--okrypterad fil.html]
+
+Källor: SBLGNT/MorphGNT (former och parsning), STEPBible TBESG (glosor),
+MACULA Greek (Strong's-nummer). Allt laddas ned automatiskt till scripts/.cache/.
+Kursfilen (kurser/mounce.tsv) skapas en gång med scripts/exportera_mounce.py och
+committas aldrig.
+
 Lösenordet frågas efter vid körning (eller sätts med miljövariabeln KOP_PASSWORD).
 Skriv aldrig in lösenordet i någon fil i repot.
-Skriptet laddar ned MorphGNT automatiskt till scripts/.cache/."""
-import sys,os,io,zipfile,urllib.request
+Med --okrypterad skrivs appen okrypterad till den angivna filen (för lokal test,
+lägg den utanför repot) och index.html lämnas orörd."""
+import sys,os,io,zipfile,urllib.request,argparse
 HERE=os.path.dirname(os.path.abspath(__file__)); ROOT=os.path.dirname(HERE)
-DB=os.path.abspath(sys.argv[1]) if len(sys.argv)>1 else os.path.join(HERE,"glosor.sqlite")
+ap=argparse.ArgumentParser()
+ap.add_argument("--kurs",default=os.path.join(ROOT,"kurser","mounce.tsv"))
+ap.add_argument("--okrypterad")
+ARGS=ap.parse_args()
+KURS=os.path.abspath(ARGS.kurs)
+if not os.path.exists(KURS):
+    sys.exit(f"Hittar inte kursfilen {KURS}. Kör först: python3 scripts/exportera_mounce.py")
 CACHE=os.path.join(HERE,".cache"); os.makedirs(CACHE,exist_ok=True)
 ALL=os.path.join(CACHE,"all.txt")
 if not os.path.exists(ALL):
@@ -17,26 +30,21 @@ if not os.path.exists(ALL):
             if n.endswith("-morphgnt.txt"): out.write(z.read(n).decode("utf8"))
 os.chdir(CACHE)
 # ---- steg 1: matcha glosor mot NT-former ----
-import sqlite3,unicodedata as u,collections,json,re
+import csv,unicodedata as u,collections,json,re
+sys.path.insert(0,HERE)
+from lexikon import Lexikon
 def nfc(s): return u.normalize('NFC',s.strip())
-def strip(s): return ''.join(c for c in u.normalize('NFD',s) if not u.combining(c)).lower()
-alias={'ἄρχομαι':'ἄρχω','πορεύω':'πορεύομαι','κοιμάω':'κοιμάομαι','κολλάω':'κολλάομαι','προσκαλέω':'προσκαλέομαι','προσλαμβάνω':'προσλαμβάνομαι','σέβω':'σέβομαι','ἐκπλήσσω':'ἐκπλήσσομαι','ἐλεέω':'ἐλεάω','ἐντέλλω':'ἐντέλλομαι','Ᾰδης':'ᾅδης','σατανᾶς':'Σατανᾶς','ἱερόν':'ἱερός','ἀφίστημι':'ἀφίσταμαι'}
-c=sqlite3.connect(DB)
-rows=c.execute("select kapitel,typ,ord,betydelse,principalformer,frekvens,id from glosor where typ in ('N','V','U') order by kapitel,id").fetchall()
 lines=[l.split() for l in open(ALL,encoding='utf8')]
+LEX=Lexikon(CACHE,lines,os.path.join(HERE,"glosor_rattelser.tsv"))
 # words
-words=[];lem2w=collections.defaultdict(list)
-for ch,t,w,m,pp,fr,seq in rows:
-    w=re.sub(r'\s+',' ',nfc(w)); head=nfc(w.split(',')[0])
-    if t=='U':
-        if w.count(',')<2 or head in ('ἐμαυτοῦ','χρυσοῦς'): continue
-        t='N'
-    if t=='N' and w.count(',')<2: continue
-    L=alias.get(head,head)
-    m=re.sub(r'<br\s*/?>','; ',m or '').strip(); m=re.sub(r'\s+',' ',m)
-    pp=(pp or '').strip()
-    words.append(dict(ch=ch,t=t,w=w,h=head,m=m,pp=pp,fr=fr,L=L))
+words=[];lem2w=collections.defaultdict(list);noglosa=[]
+for r in csv.DictReader(open(KURS,encoding='utf8'),delimiter='\t'):
+    L,head,t,ch=nfc(r['lemma']),nfc(r['uppslagsord']),r['ordklass'],int(r['kapitel'])
+    m=LEX.glosa(L,head,t)
+    if not m: noglosa.append(head)
+    words.append(dict(ch=ch,t=t,w=LEX.uppslagsord(L,head,t),h=head,m=m,pp=(r.get('principalformer') or '').strip(),L=L))
     lem2w[L].append(len(words)-1)
+if noglosa: print('Saknar glosa:',' '.join(noglosa))
 print(len(words))
 # forms
 forms={}  # (form,widx)->dict
@@ -141,6 +149,9 @@ open("data.json","w",encoding="utf8").write(json.dumps(_d,ensure_ascii=False,sep
 s=open(os.path.join(ROOT,"src","app.html"),encoding="utf8").read()
 d=open("data.json",encoding="utf8").read().replace("</","<\\/")
 app=s.replace("__DATA__",d)
+if ARGS.okrypterad:
+    open(os.path.abspath(os.path.join(ROOT,ARGS.okrypterad)) if not os.path.isabs(ARGS.okrypterad) else ARGS.okrypterad,"w",encoding="utf8").write(app)
+    sys.exit(f"Klart: okrypterad app skriven till {ARGS.okrypterad}. index.html är inte ändrad.")
 # ---- steg 3: kryptera appen bakom lösenordet ----
 import getpass,gzip,base64,hashlib
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
