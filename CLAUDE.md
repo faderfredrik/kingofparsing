@@ -17,6 +17,7 @@ Appen är en enda statisk HTML-fil som publiceras med GitHub Pages. Den har inge
 | `scripts/exportera_mounce.py` | Engångsskript som skriver Mounces kapitelindelning från `glosor.sqlite` till `kurser/mounce.tsv`. |
 | `kurser/` | Kursfiler med läroböckernas kapitelindelning (`mounce.tsv`, `duff.tsv`, `croy.tsv`) och grammatikordning (`<bok>-grammatik.tsv`). **Committas aldrig.** |
 | `scripts/morph.py`, `scripts/analyze.py` | Motorn för morfologisk nedbrytning (sprängskissen). |
+| `scripts/noter_en.py` | Engelska mallar för sprängskissens förklaringar. Bygget stoppas om en förklaring saknar mall. |
 | `index.html` | Byggd och krypterad. **Redigera aldrig den här filen för hand.** |
 
 ### Bygget
@@ -62,6 +63,7 @@ Bygget kräver `pip install cryptography`. Det tar några minuter, och analysste
 - `forms`: `[form, ordindex, godkända parsningskoder skilda med '|', antal förekomster i NT, exempelreferens 'bcv.ordindex']`.
 - `verses`: versers text, nycklade på bcv.
 - `an` och `fa`: nedbrytningar och kopplingen form → kod → nedbrytning.
+- `nt`: sprängskissens förklaringar som `[svenska, engelska]`.
 
 Parsningskoderna skrivs så här:
 
@@ -112,7 +114,7 @@ Tvetydiga former får alla korrekta parsningar som godkända svar. Medium och pa
   - Medium av icke-deponensverb i presens, imperfekt, perfekt och pluskvamperfekt översätts som passiv.
   - För substantiv står ”(subjekt)” eller ”(objekt)” på svenska efter den engelska översättningen.
 - **Lagring:** `localStorage` används för `kop-settings`, `kop-life` och `kop-key-<id>`, där den sista sparar inloggningen för ”kom ihåg mig”. Läsningar och skrivningar är alltid inslagna i try/catch.
-- **Språk:** svenska och engelska, valt med flaggorna uppe till höger (`S.lang` i `kop-settings`). Utan sparat val blir det svenska om webbläsaren har svenska bland sina språk, annars engelska. All gränssnittstext ligger i `T` (meningar) och `LBL` (grammatiska termer, bibelböcker, nivåer) i `src/app.html`; använd `tx('nyckel')` och lägg alltid till texten på båda språken. Fast text i HTML:en märks med `data-i`/`data-ia`. Inloggningssidan har en egen liten ordlista och läser och skriver samma `kop-settings.lang`. Sprängskissens förklaringar kommer från `morph.py`/`analyze.py` och finns ännu bara på svenska.
+- **Språk:** svenska och engelska, valt med flaggorna uppe till höger (`S.lang` i `kop-settings`). Utan sparat val blir det svenska om webbläsaren har svenska bland sina språk, annars engelska. All gränssnittstext ligger i `T` (meningar) och `LBL` (grammatiska termer, bibelböcker, nivåer) i `src/app.html`; använd `tx('nyckel')` och lägg alltid till texten på båda språken. Fast text i HTML:en märks med `data-i`/`data-ia`. Inloggningssidan har en egen liten ordlista och läser och skriver samma `kop-settings.lang`. Sprängskissens förklaringar skrivs på svenska i `morph.py` och översätts i bygget med mallarna i `scripts/noter_en.py`. De sparas i `nt` som `[svenska, engelska]`, och `an` pekar på dem med index. Lägg alltid till en engelsk mall när du lägger till en ny förklaring.
 - **Tangentbord:** Enter kontrollerar svaret och går sedan vidare till nästa ord.
 
 ## Design

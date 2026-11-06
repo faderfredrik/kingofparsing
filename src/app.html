@@ -311,7 +311,9 @@ kbd{font-family:var(--ui);background:var(--surface);border-radius:6px;padding:2p
 const D=JSON.parse(document.getElementById('data').textContent);
 const W=D.words.map((a,i)=>({i,ch:a[0],t:a[1],w:a[2],h:a[3],m:a[4],pp:a[5]}));
 const F=D.forms.map((a,i)=>({i,f:a[0],w:a[1],codes:a[2].split('|'),n:a[3],ref:a[4]}));
-const AN=D.an||[],FA=D.fa||{};
+const AN=D.an||[],FA=D.fa||{},NT=D.nt||[];
+/* sprängskissens förklaringar: index i NT ([svenska, engelska]) */
+const noteText=n=>typeof n==='number'?(NT[n]||[])[LANG==='en'?1:0]||'':n;
 const byWord={};F.forEach(f=>{(byWord[f.w]=byWord[f.w]||[]).push(f)});
 const BOOKLIST=(D.books&&D.books.length?D.books:[{id:'mounce',name:'Mounce',title:'Basics of Biblical Greek',ch:W.map(w=>w.ch),gram:null}]);
 let B=BOOKLIST[0],CHAPTERS=[];
@@ -754,7 +756,7 @@ function breakdownHTML(){
     h+=`<div class="mseg t-${t}" style="animation-delay:${dl}ms"><span class="lab">${lab}</span><span class="br"></span><span class="mo" lang="grc">${esc(x||'–')}</span></div>`;
   });
   h+='</div>';
-  if(notes.length) h+=`<ul class="bdnotes" lang="sv">${notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul>`;
+  if(notes.length) h+=`<ul class="bdnotes">${notes.map(n=>`<li>${esc(noteText(n))}</li>`).join('')}</ul>`;
   return h+'</div>';
 }
 /* ---------- inflected English translation ---------- */
