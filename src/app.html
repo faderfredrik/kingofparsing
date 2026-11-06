@@ -148,9 +148,9 @@ button.pill:hover{background:var(--surface-2)}
 .field h3{margin:0 0 10px;font-size:14px;font-weight:600;color:var(--muted)}
 .opts{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(112px,1fr))}
 .opts.lex{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
-.opt{hyphens:manual;overflow-wrap:break-word;border:0;background:var(--surface-2);border-radius:10px;padding:11px 8px;font-weight:600;font-size:15px;line-height:1.25;min-height:46px;transition:background .12s}
+.opt{hyphens:manual;overflow-wrap:break-word;border:0;background:var(--surface-2);border-radius:10px;padding:11px 8px;font-weight:600;font-size:15px;line-height:1.25;min-height:46px}
 .opt small{display:block;font-weight:500;font-size:12px;color:var(--muted);margin-top:2px}
-.opt:hover:not(:disabled){background:var(--surface-3)}
+@media (hover:hover){.opt:hover:not(:disabled):not([aria-pressed="true"]){background:var(--surface-3)}}
 .opt[aria-pressed="true"]{background:var(--lapis);color:var(--lapis-ink)}
 .opt[aria-pressed="true"] small{color:rgba(255,255,255,.8)}
 .opt.lone{background:var(--gold-tint);color:var(--ink);cursor:default}
