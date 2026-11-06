@@ -1,6 +1,6 @@
 # King of parsing: projektanteckningar för Claude Code
 
-En webbapp för att träna parsning av koine-grekiska substantiv och verb enligt Bill Mounce, *Basics of Biblical Greek*. Ägaren är svensktalande. **Allt användargränssnitt och all kommunikation sker på svenska.** Glosorna och den böjda översättningen är på engelska, eftersom Mounces glosor är engelska.
+En webbapp för att träna parsning av koine-grekiska substantiv och verb enligt Bill Mounce, *Basics of Biblical Greek*. Ägaren är svensktalande. **All kommunikation sker på svenska.** Användargränssnittet finns på svenska och engelska (se ”Språk” nedan). Glosorna och den böjda översättningen är på engelska, eftersom Mounces glosor är engelska.
 
 ## Arkitektur
 
@@ -112,6 +112,7 @@ Tvetydiga former får alla korrekta parsningar som godkända svar. Medium och pa
   - Medium av icke-deponensverb i presens, imperfekt, perfekt och pluskvamperfekt översätts som passiv.
   - För substantiv står ”(subjekt)” eller ”(objekt)” på svenska efter den engelska översättningen.
 - **Lagring:** `localStorage` används för `kop-settings`, `kop-life` och `kop-key-<id>`, där den sista sparar inloggningen för ”kom ihåg mig”. Läsningar och skrivningar är alltid inslagna i try/catch.
+- **Språk:** svenska och engelska, valt med flaggorna uppe till höger (`S.lang` i `kop-settings`). Utan sparat val blir det svenska om webbläsaren har svenska bland sina språk, annars engelska. All gränssnittstext ligger i `T` (meningar) och `LBL` (grammatiska termer, bibelböcker, nivåer) i `src/app.html`; använd `tx('nyckel')` och lägg alltid till texten på båda språken. Fast text i HTML:en märks med `data-i`/`data-ia`. Inloggningssidan har en egen liten ordlista och läser och skriver samma `kop-settings.lang`. Sprängskissens förklaringar kommer från `morph.py`/`analyze.py` och finns ännu bara på svenska.
 - **Tangentbord:** Enter kontrollerar svaret och går sedan vidare till nästa ord.
 
 ## Design

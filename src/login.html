@@ -9,10 +9,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#E8ECF3;--surface:#FFFFFF;--surface-2:#E3E8F1;--ink:#16213F;--muted:#5C6784;--gold:#F0B232;--gold-ink:#2B1E00;--wrong:#C63F2A;--hero:#1C337A;
+:root{--bg:#E8ECF3;--surface:#FFFFFF;--surface-2:#E3E8F1;--ink:#16213F;--muted:#5C6784;--gold:#F0B232;--gold-ink:#2B1E00;--wrong:#C63F2A;--hero:#1C337A;--lapis:#2346A8;
   box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0D1530;--surface:#16214A;--surface-2:#1F2C5C;--ink:#EEF1FA;--muted:#9BA7C8;--gold:#F4BC45;--gold-ink:#241900;--wrong:#FF8A75;--hero:#1B2C69;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#0D1530;--surface:#16214A;--surface-2:#1F2C5C;--ink:#EEF1FA;--muted:#9BA7C8;--gold:#F4BC45;--gold-ink:#241900;--wrong:#FF8A75;--hero:#1B2C69;color-scheme:dark}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0D1530;--surface:#16214A;--surface-2:#1F2C5C;--ink:#EEF1FA;--muted:#9BA7C8;--gold:#F4BC45;--gold-ink:#241900;--wrong:#FF8A75;--hero:#1B2C69;--lapis:#5677E0;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0D1530;--surface:#16214A;--surface-2:#1F2C5C;--ink:#EEF1FA;--muted:#9BA7C8;--gold:#F4BC45;--gold-ink:#241900;--wrong:#FF8A75;--hero:#1B2C69;--lapis:#5677E0;color-scheme:dark}
 *,*::before,*::after{box-sizing:inherit}
 html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;display:grid;place-items:center;padding:20px}
@@ -29,19 +29,33 @@ input:focus-visible,button:focus-visible{outline:3px solid var(--gold);outline-o
 button{width:100%;border:0;background:var(--gold);color:var(--gold-ink);border-radius:12px;padding:14px;font:inherit;font-weight:700;font-size:16px;cursor:pointer}
 button:disabled{opacity:.6;cursor:default}
 .err{color:var(--wrong);font-size:14px;font-weight:600;min-height:1.4em;margin:12px 0 0}
+.langsw{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));right:14px;display:inline-flex;background:var(--surface);border-radius:999px;padding:3px;gap:2px}
+.langsw button{width:auto;border:0;background:transparent;border-radius:999px;padding:5px 9px;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;line-height:1;color:var(--muted)}
+.langsw button:hover{background:var(--surface-2)}
+.langsw button[aria-pressed="true"]{background:var(--lapis);color:#fff}
+.langsw button[aria-pressed="false"] .flag{opacity:.6}
+.flag{width:21px;height:14px;border-radius:3px;display:block;flex:none;overflow:hidden}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="flag-sv" viewBox="0 0 16 10" preserveAspectRatio="xMidYMid slice"><rect width="16" height="10" fill="#006AA7"/><rect x="5" width="2" height="10" fill="#FECC00"/><rect y="4" width="16" height="2" fill="#FECC00"/></symbol>
+  <symbol id="flag-en" viewBox="0 0 60 30" preserveAspectRatio="xMidYMid slice"><clipPath id="flag-en-t"><path d="M30,15h30v15zv15h-30zh-30v-15zv-15h30z"/></clipPath><rect width="60" height="30" fill="#012169"/><path d="M0,0L60,30M60,0L0,30" stroke="#fff" stroke-width="6"/><path d="M0,0L60,30M60,0L0,30" clip-path="url(#flag-en-t)" stroke="#C8102E" stroke-width="4"/><path d="M30,0v30M0,15h60" stroke="#fff" stroke-width="10"/><path d="M30,0v30M0,15h60" stroke="#C8102E" stroke-width="6"/></symbol>
+</defs></svg>
+<div class="langsw" id="langSw" role="group" aria-label="Språk / Language">
+  <button type="button" data-lang="sv" lang="sv" title="Svenska" aria-label="Svenska"><svg class="flag" aria-hidden="true"><use href="#flag-sv"/></svg><span aria-hidden="true">SV</span></button>
+  <button type="button" data-lang="en" lang="en" title="English" aria-label="English"><svg class="flag" aria-hidden="true"><use href="#flag-en"/></svg><span aria-hidden="true">EN</span></button>
+</div>
 <main class="card">
   <svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><path fill="var(--gold)" d="M2.5 14C3.5 5 11 0.5 20 0.5S36.5 5 37.5 14L32.6 14C31 9.5 26.5 6.6 20 6.6S9 9.5 7.4 14Z"/><path fill="var(--gold)" fill-rule="evenodd" d="M8 17C8 11 13 8 20 8S32 11 32 17L32 28C32 32 29 35.5 25 38.5L15 38.5C11 35.5 8 32 8 28Z M11.5 18.5L18.6 19.4L18.6 26L21.4 26L21.4 19.4L28.5 18.5L28 22L22.6 23.8L22.4 38.5L17.6 38.5L17.4 23.8L12 22Z"/></svg>
   <h1>King <span class="of">of</span> Parsing</h1>
-  <p class="sub">Ange lösenordet du har fått för att öppna appen.</p>
+  <p class="sub" data-i="sub"></p>
   <form id="f" autocomplete="on">
     <input type="text" name="username" value="king-of-parsing" autocomplete="username" hidden>
-    <label for="pw">Lösenord</label>
+    <label for="pw" data-i="pw"></label>
     <input id="pw" type="password" autocomplete="current-password" required autofocus>
-    <label class="remember"><input id="rem" type="checkbox" checked> Kom ihåg mig på den här enheten</label>
-    <button id="go" type="submit">Logga in</button>
+    <label class="remember"><input id="rem" type="checkbox" checked> <span data-i="rem"></span></label>
+    <button id="go" type="submit" data-i="go"></button>
     <p class="err" id="err" role="alert"></p>
   </form>
 </main>
@@ -50,6 +64,26 @@ button:disabled{opacity:.6;cursor:default}
 (function(){
 const P=JSON.parse(document.getElementById('payload').textContent);
 const KEY='kop-key-'+P.id;
+/* språk: samma inställning som appen (kop-settings.lang) */
+const T={
+  sv:{sub:'Ange lösenordet du har fått för att öppna appen.',pw:'Lösenord',rem:'Kom ihåg mig på den här enheten',go:'Logga in',busy:'Låser upp …',bad:'Fel lösenord. Kontrollera stavningen och försök igen.'},
+  en:{sub:'Enter the password you were given to open the app.',pw:'Password',rem:'Remember me on this device',go:'Log in',busy:'Unlocking …',bad:'Wrong password. Check the spelling and try again.'}
+};
+let LANG='sv';
+function readSettings(){try{return JSON.parse(localStorage.getItem('kop-settings')||'null')||{}}catch(e){return {}}}
+function defaultLang(){try{const ls=navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language||''];return ls.some(x=>/^sv\b/i.test(x))?'sv':'en'}catch(e){return 'sv'}}
+function setLang(l){
+  LANG=T[l]?l:'sv';
+  document.documentElement.lang=LANG;
+  document.querySelectorAll('[data-i]').forEach(e=>{e.textContent=T[LANG][e.dataset.i]});
+  document.querySelectorAll('#langSw button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.lang===LANG));
+  const er=document.getElementById('err');if(er.textContent) er.textContent=T[LANG].bad;
+}
+setLang(readSettings().lang||defaultLang());
+document.querySelectorAll('#langSw button').forEach(b=>b.onclick=()=>{
+  setLang(b.dataset.lang);
+  const s=readSettings();s.lang=LANG;try{localStorage.setItem('kop-settings',JSON.stringify(s))}catch(e){}
+});
 const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 const toB64=buf=>btoa(String.fromCharCode(...new Uint8Array(buf)));
 async function open(key){
@@ -65,7 +99,7 @@ async function derive(pw){
 try{const k=localStorage.getItem(KEY);if(k){crypto.subtle.importKey('raw',b64(k),'AES-GCM',true,['decrypt']).then(open).catch(()=>{try{localStorage.removeItem(KEY)}catch(e){}})}}catch(e){}
 const f=document.getElementById('f'),err=document.getElementById('err'),go=document.getElementById('go');
 f.addEventListener('submit',async e=>{
-  e.preventDefault();err.textContent='';go.disabled=true;go.textContent='Låser upp …';
+  e.preventDefault();err.textContent='';go.disabled=true;go.textContent=T[LANG].busy;
   try{
     const key=await derive(document.getElementById('pw').value);
     const raw=await crypto.subtle.exportKey('raw',key);
@@ -73,8 +107,8 @@ f.addEventListener('submit',async e=>{
     if(document.getElementById('rem').checked){try{localStorage.setItem(KEY,toB64(raw))}catch(e){}}
     await open(key);
   }catch(x){
-    err.textContent='Fel lösenord. Kontrollera stavningen och försök igen.';
-    go.disabled=false;go.textContent='Logga in';
+    err.textContent=T[LANG].bad;
+    go.disabled=false;go.textContent=T[LANG].go;
   }
 });
 })();
