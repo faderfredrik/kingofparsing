@@ -130,6 +130,9 @@ button.pill:hover{background:var(--surface-2)}
 .mseg .mo{font-family:var(--greek);font-size:34px;line-height:1.2;padding:3px 6px 0;text-align:center}
 .mseg.t-stem{color:var(--hero-ink)}
 .mseg.t-pre,.mseg.t-aug,.mseg.t-red{color:#C9D4F5}
+.bd.nolab .mseg .lab{visibility:hidden}
+.bd.still .mseg,.bd.still .plus{animation:none}
+.bd.still .mseg .lab{animation:fade .4s both}
 .plus{color:var(--hero-muted);font-size:22px;line-height:1;padding-bottom:12px;animation:fade .4s both}
 .bdnotes{list-style:none;margin:16px auto 0;padding:14px 16px;max-width:600px;background:rgba(255,255,255,.07);border-radius:14px;color:#DCE3F8;font-size:14.5px;text-align:left;display:grid;gap:6px;animation:fade .5s .3s both}
 .bdnotes li{padding-left:18px;position:relative}
@@ -284,7 +287,7 @@ kbd{font-family:var(--ui);background:var(--surface);border-radius:6px;padding:2p
     <section class="hero" aria-live="polite">
       <div class="hero-top">
         <span id="qCount"></span>
-        <button class="hint" id="hintBtn"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1a5 5 0 0 0-3 9v2h6v-2a5 5 0 0 0-3-9zM6 13.5h4V15H6z" fill="currentColor"/></svg><span data-i="hint"></span></button>
+        <button class="hint" id="hintBtn"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="5" width="3" height="6" rx="1" fill="currentColor"/><rect x="6.5" y="5" width="3" height="6" rx="1" fill="currentColor"/><rect x="12" y="5" width="3" height="6" rx="1" fill="currentColor"/></svg><span id="hintLbl"></span></button>
       </div>
       <div class="form" id="qForm" lang="grc"></div>
       <div id="qBreak"></div>
@@ -370,7 +373,7 @@ const T={
   chH:'Glosor att \u00f6va p\u00e5', chSub:'V\u00e4lj vilka kapitels glosor som ska ing\u00e5. H\u00e5ll ned Shift f\u00f6r att v\u00e4lja ett intervall.', goldNote:' Den guldmarkerade rutan visar din kunskapsniv\u00e5.',
   lenH:'Omg\u00e5ngens l\u00e4ngd', lenSub:'Fri \u00f6vning p\u00e5g\u00e5r tills du avslutar.', lenAria:'Antal fr\u00e5gor', free:'Fri \u00f6vning',
   credits:()=>`K\u00e4llor: grekisk text fr\u00e5n ${CREDIT_LINKS.sblgnt} (CC BY 4.0), parsning fr\u00e5n ${CREDIT_LINKS.morph} (CC BY-SA 3.0), glosor fr\u00e5n ${CREDIT_LINKS.step} av Tyndale House Cambridge och STEPBible.org (CC BY 4.0, bearbetade), Strong\u2019s-nummer fr\u00e5n ${CREDIT_LINKS.macula} av Biblica (CC BY 4.0) och principalformer framtagna med ${CREDIT_LINKS.infl} av James Tauber (MIT).`,
-  hint:'Ledtr\u00e5d',
+  splitWord:'Dela upp ordet', showLabels:'Visa etiketter',
   bookSub:t=>`<i>${t}</i>. Glosorna och grammatiken f\u00f6ljer bokens kapitel.`, bookNoGram:' Bokens grammatikordning \u00e4r inte inlagd \u00e4nnu, s\u00e5 du v\u00e4ljer grammatiken sj\u00e4lv.',
   typeSub:(v,n)=>`Verb kan \u00f6vas fr\u00e5n kapitel ${v}, substantiv fr\u00e5n kapitel ${n}.`, typeSubF:'V\u00e4lj vilka ordklasser du vill \u00f6va p\u00e5.',
   lvlBook:b=>`Hur l\u00e5ngt du har kommit i ${b}.`, lvlBookF:'Vilken grammatik du har g\u00e5tt igenom.',
@@ -416,7 +419,7 @@ const T={
   chH:'Vocabulary to practise', chSub:'Choose which chapters\u2019 vocabulary to include. Hold down Shift to select a range.', goldNote:' The gold box shows your level.',
   lenH:'Session length', lenSub:'Free practice continues until you end it.', lenAria:'Number of questions', free:'Free practice',
   credits:()=>`Sources: Greek text from the ${CREDIT_LINKS.sblgnt} (CC BY 4.0), parsing from ${CREDIT_LINKS.morph} (CC BY-SA 3.0), glosses from ${CREDIT_LINKS.step} by Tyndale House Cambridge and STEPBible.org (CC BY 4.0, adapted), Strong\u2019s numbers from ${CREDIT_LINKS.macula} by Biblica (CC BY 4.0) and principal parts generated with ${CREDIT_LINKS.infl} by James Tauber (MIT).`,
-  hint:'Hint',
+  splitWord:'Split the word', showLabels:'Show labels',
   bookSub:t=>`<i>${t}</i>. The vocabulary and grammar follow the book\u2019s chapters.`, bookNoGram:' The book\u2019s grammar sequence has not been added yet, so you choose the grammar yourself.',
   typeSub:(v,n)=>`Verbs can be practised from chapter ${v}, nouns from chapter ${n}.`, typeSubF:'Choose which parts of speech you want to practise.',
   lvlBook:b=>`How far you have got in ${b}.`, lvlBookF:'Which grammar you have covered.',
@@ -686,7 +689,7 @@ function nextQuestion(){
   if(sess.total&&sess.i>=sess.total){return renderSummary()}
   const f=pickForm(),word=W[f.w];
   const acc=f.codes.filter(c=>learned(word.t,c,sess.M));
-  q={f,word,acc:acc.length?acc:f.codes,sel:{},checked:false,hint:false,lex:distractors(word),opts:availOpts(word.t,sess.M)};
+  q={f,word,acc:acc.length?acc:f.codes,sel:{},checked:false,hint:0,lex:distractors(word),opts:availOpts(word.t,sess.M)};
   // preselect single-option fields
   ['tense','voice','mood','case'].forEach(k=>{if(q.opts[k]&&q.opts[k].length===1&&fieldsFor().includes(k))q.sel[k]=q.opts[k]});
   sess.i++;
@@ -729,10 +732,12 @@ function renderQuiz(){
   const kind=tx(word.t==='N'?'kindN':'kindV');
   $('qCount').textContent=sess.total?tx('count',kind,sess.i,sess.total):tx('countFree',kind,sess.i);
   $('qForm').textContent=f.f;
-  $('qBreak').innerHTML=q.checked?breakdownHTML():'';
+  const hk=hintCode();
+  $('qBreak').innerHTML=q.checked?breakdownHTML(q.best,'full'):(q.hint&&hk?breakdownHTML(hk,q.hint>1?'labels':'split'):'');
   const tr=q.checked?inflTr(word,q.best):null;
   $('qGloss').innerHTML=tr?`<em class="infl">${esc(tr)}</em><span class="base">${tx('baseMeaning')}${esc(word.m)}</span>`:(q.hint||q.checked?`<em>${esc(word.m)}</em>`:'');
-  $('hintBtn').classList.toggle('hidden',q.hint||q.checked);
+  $('hintBtn').classList.toggle('hidden',q.checked||q.hint>1||!hk);
+  $('hintLbl').textContent=tx(q.hint?'showLabels':'splitWord');
   renderFields();
   $('resultBox').innerHTML='';
   if(q.checked) renderResult();
@@ -740,15 +745,22 @@ function renderQuiz(){
   if(q.checked) setActions([{label:tx(sess.total&&sess.i>=sess.total?'showRes':'next'),primary:true,fn:nextQuestion}],tx('nextHint'));
   else setActions([{label:tx('checkBtn'),primary:true,fn:check}],tx('checkHint'));
 }
-function breakdownHTML(){
-  const m=FA[q.f.i],ix=m?m[q.best]:undefined;
+/* Koden vars nedbrytning visas som hjälp innan svaret kontrolleras. */
+function hintCode(){
+  const m=FA[q.f.i];
+  return m?q.acc.find(c=>m[c]!==undefined):undefined;
+}
+/* mode: 'full' efter kontroll, 'split' bara delarna, 'labels' delarna med etiketter. */
+function breakdownHTML(code,mode){
+  const m=FA[q.f.i],ix=m?m[code]:undefined;
   if(ix===undefined){
-    const part=q.word.t==='V'&&q.best[2]==='P';
+    const part=q.word.t==='V'&&code[2]==='P';
     return `<p class="bdnone">${tx(part?'noPart':'irregular')}</p>`;
   }
   const [ms,notes]=AN[ix];
   const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let h=`<div class="bd"><div class="segs" aria-label="${tx('parts')}">`;
+  const cls=mode==='split'?' nolab':mode==='labels'?' still':'';
+  let h=`<div class="bd${cls}"><div class="segs" aria-label="${tx('parts')}">`;
   ms.forEach(([t,x],i)=>{
     const lab=t==='end'?(q.word.t==='N'?L.morph.endN:L.morph.end):L.morph[t];
     const dl=reduce?0:120+i*110;
@@ -756,7 +768,7 @@ function breakdownHTML(){
     h+=`<div class="mseg t-${t}" style="animation-delay:${dl}ms"><span class="lab">${lab}</span><span class="br"></span><span class="mo" lang="grc">${esc(x||'–')}</span></div>`;
   });
   h+='</div>';
-  if(notes.length) h+=`<ul class="bdnotes">${notes.map(n=>`<li>${esc(noteText(n))}</li>`).join('')}</ul>`;
+  if(mode==='full'&&notes.length) h+=`<ul class="bdnotes">${notes.map(n=>`<li>${esc(noteText(n))}</li>`).join('')}</ul>`;
   return h+'</div>';
 }
 /* ---------- inflected English translation ---------- */
@@ -1012,7 +1024,7 @@ function setActions(list,hint){
   const box=$('actBtns');box.innerHTML='';actFns=list;
   list.forEach(a=>{const b=document.createElement('button');b.className=a.primary?'primary':'ghost';b.textContent=a.label;b.disabled=!!a.disabled;b.onclick=a.fn;box.appendChild(b)});
 }
-$('hintBtn').onclick=()=>{q.hint=true;renderQuiz()};
+$('hintBtn').onclick=e=>{q.hint=Math.min(q.hint+1,2);renderQuiz();e.currentTarget.blur()};
 $('homeBtn').onclick=()=>{show('setup');renderSetup()};
 document.addEventListener('keydown',e=>{
   if(e.key!=='Enter'||e.metaKey||e.ctrlKey) return;
