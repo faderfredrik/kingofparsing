@@ -10,7 +10,7 @@ Appen är en enda statisk HTML-fil som publiceras med GitHub Pages. Den har inge
 |---|---|
 | `src/app.html` | Själva appen: HTML, CSS och JS. Platshållaren `__DATA__` byts mot data vid bygget. **Här görs nästan alla ändringar.** |
 | `src/login.html` | Inloggningssidan. Platshållaren `__PAYLOAD__` byts mot den krypterade appen. |
-| `scripts/build.py` | Bygger `index.html` (se nedan). |
+| `scripts/build.py` | Bygger `login/index.html` (se nedan). |
 | `scripts/lexikon.py` | Den öppna ordbasen: glosor från STEPBible TBESG, Strong’s-nummer från MACULA Greek och substantivens uppslagsform (genitiv och genus) ur MorphGNT. |
 | `scripts/principalformer.tsv`, `scripts/principalformer_rattelser.tsv` | Principalformer för alla verb (öppna, committas) och egna rättelser. |
 | `scripts/glosor_rattelser.tsv` | Projektets egna rättelser av glosor och uppslagsformer. Den här filen är öppen och committas. |
@@ -18,7 +18,8 @@ Appen är en enda statisk HTML-fil som publiceras med GitHub Pages. Den har inge
 | `kurser/` | Kursfiler med läroböckernas kapitelindelning (`mounce.tsv`, `duff.tsv`, `croy.tsv`) och grammatikordning (`<bok>-grammatik.tsv`). **Committas aldrig.** |
 | `scripts/morph.py`, `scripts/analyze.py` | Motorn för morfologisk nedbrytning (sprängskissen). |
 | `scripts/noter_en.py` | Engelska mallar för sprängskissens förklaringar. Bygget stoppas om en förklaring saknar mall. |
-| `index.html` | Byggd och krypterad. **Redigera aldrig den här filen för hand.** |
+| `login/index.html` | Inloggningssidan med den krypterade appen. Den byggs av `build.py`. **Redigera aldrig den här filen för hand.** |
+| `index.html`, `img/` | Onepagern för studenter, som ligger på startadressen. Den skrivs för hand på engelska och byggs inte. Alla knappar för ”Get early access” leder till `login/`. Screenshotsen i `img/` är tagna i mörkt läge. |
 
 ### Bygget
 
@@ -26,7 +27,7 @@ Appen är en enda statisk HTML-fil som publiceras med GitHub Pages. Den har inge
 python3 scripts/build.py
 ```
 
-Med `--okrypterad <fil>` skrivs appen okrypterad till en fil utanför repot för lokal test, och `index.html` lämnas orörd. Med `--kurs <fil>` väljs en annan kursfil än `kurser/mounce.tsv`.
+Med `--okrypterad <fil>` skrivs appen okrypterad till en fil utanför repot för lokal test, och `login/index.html` lämnas orörd. Med `--kurs <fil>` väljs en annan kursfil än `kurser/mounce.tsv`.
 
 Bygget gör följande steg i tur och ordning:
 
@@ -36,7 +37,7 @@ Bygget gör följande steg i tur och ordning:
 4. Kör morfologianalysen och lägger in den i datan.
 5. Infogar datan i `src/app.html`.
 6. Krypterar appen med AES-GCM. Nyckeln tas fram med PBKDF2-SHA256 i 600 000 iterationer.
-7. Lägger in det krypterade paketet i `src/login.html` och skriver resultatet till `index.html`.
+7. Lägger in det krypterade paketet i `src/login.html` och skriver resultatet till `login/index.html`.
 
 Glosorna kommer från öppna källor med CC BY-licens. TBESG-glosan putsas till appens format (”to write”, ”spirit, breath”) och kan ersättas via `glosor_rattelser.tsv`. Kursfilen har kolumnerna `lemma`, `uppslagsord`, `ordklass` och `kapitel`. Kolumnen `principalformer` används inte längre.
 
@@ -49,13 +50,13 @@ Bygget kräver `pip install cryptography`. Det tar några minuter, och analysste
 ### Regler som aldrig får brytas
 
 - **Lösenordet får aldrig skrivas in i någon fil, något commit-meddelande eller någon kod.** Skriptet frågar efter det med `getpass`, eller läser miljövariabeln `KOP_PASSWORD` som användaren själv sätter i terminalen. Fråga användaren i stället för att gissa.
-- **`glosor.sqlite` och `kurser/` får aldrig committas.** Läroböckernas material är upphovsrättsskyddat. Repot är publikt, och därför finns kapitelindelningen bara i krypterad form i `index.html`. `.gitignore` utesluter `*.sqlite`, `kurser/` och `scripts/.cache/`.
+- **`glosor.sqlite` och `kurser/` får aldrig committas.** Läroböckernas material är upphovsrättsskyddat. Repot är publikt, och därför finns kapitelindelningen bara i krypterad form i `login/index.html`. `.gitignore` utesluter `*.sqlite`, `kurser/` och `scripts/.cache/`.
 - Källhänvisningarna längst ned på startsidan krävs av CC BY-licenserna och får inte tas bort.
-- Bygg alltid om `index.html` efter en ändring i `src/` och committa båda filerna tillsammans.
+- Bygg alltid om `login/index.html` efter en ändring i `src/` och committa båda filerna tillsammans.
 
 ### Testa lokalt
 
-`crypto.subtle` kräver en säker kontext, så appen fungerar inte via `file://`. Kör i stället `python3 -m http.server 8000` i repots rotmapp och öppna `http://localhost:8000`. Vill du testa appen okrypterad kan du skriva ut den sammanfogade appfilen till en temporär fil utanför repot.
+`crypto.subtle` kräver en säker kontext, så appen fungerar inte via `file://`. Kör i stället `python3 -m http.server 8000` i repots rotmapp och öppna `http://localhost:8000/login/`. Onepagern ligger på `http://localhost:8000`. Vill du testa appen okrypterad kan du skriva ut den sammanfogade appfilen till en temporär fil utanför repot.
 
 ## Data i appen (`D` i JS)
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bygger index.html från öppna källor + en kursfil med kapitelindelning.
+"""Bygger login/index.html från öppna källor + en kursfil med kapitelindelning.
 Användning: python3 scripts/build.py [--kurs kurser/mounce.tsv] [--okrypterad fil.html]
 
 Källor: SBLGNT/MorphGNT (former och parsning), STEPBible TBESG (glosor),
@@ -10,7 +10,7 @@ committas aldrig.
 Lösenordet frågas efter vid körning (eller sätts med miljövariabeln KOP_PASSWORD).
 Skriv aldrig in lösenordet i någon fil i repot.
 Med --okrypterad skrivs appen okrypterad till den angivna filen (för lokal test,
-lägg den utanför repot) och index.html lämnas orörd."""
+lägg den utanför repot) och login/index.html lämnas orörd."""
 import sys,os,io,zipfile,urllib.request,argparse
 HERE=os.path.dirname(os.path.abspath(__file__)); ROOT=os.path.dirname(HERE)
 ap=argparse.ArgumentParser()
@@ -196,7 +196,7 @@ d=open("data.json",encoding="utf8").read().replace("</","<\\/")
 app=s.replace("__DATA__",d)
 if ARGS.okrypterad:
     open(os.path.abspath(os.path.join(ROOT,ARGS.okrypterad)) if not os.path.isabs(ARGS.okrypterad) else ARGS.okrypterad,"w",encoding="utf8").write(app)
-    sys.exit(f"Klart: okrypterad app skriven till {ARGS.okrypterad}. index.html är inte ändrad.")
+    sys.exit(f"Klart: okrypterad app skriven till {ARGS.okrypterad}. login/index.html är inte ändrad.")
 # ---- steg 3: kryptera appen bakom lösenordet ----
 import getpass,gzip,base64,hashlib
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -206,13 +206,14 @@ pw=os.environ.get("KOP_PASSWORD")
 if not pw:
     pw=getpass.getpass("Lösenord för appen: ")
     if pw!=getpass.getpass("Skriv lösenordet igen: "):
-        sys.exit("Lösenorden stämmer inte överens. index.html har inte ändrats. Kör bygget igen.")
-if not pw: sys.exit("Tomt lösenord. index.html har inte ändrats.")
+        sys.exit("Lösenorden stämmer inte överens. login/index.html har inte ändrats. Kör bygget igen.")
+if not pw: sys.exit("Tomt lösenord. login/index.html har inte ändrats.")
 ITER=600000; salt=os.urandom(16); iv=os.urandom(12)
 key=PBKDF2HMAC(algorithm=hashes.SHA256(),length=32,salt=salt,iterations=ITER).derive(pw.encode("utf8"))
 ct=AESGCM(key).encrypt(iv,gzip.compress(app.encode("utf8"),9),None)
 b=lambda x:base64.b64encode(x).decode()
 payload=json.dumps(dict(id=hashlib.sha256(salt).hexdigest()[:12],salt=b(salt),iv=b(iv),iter=ITER,ct=b(ct)))
 login=open(os.path.join(ROOT,"src","login.html"),encoding="utf8").read()
-open(os.path.join(ROOT,"index.html"),"w",encoding="utf8").write(login.replace("__PAYLOAD__",payload))
-print("Klart: index.html (krypterad)")
+os.makedirs(os.path.join(ROOT,"login"),exist_ok=True)
+open(os.path.join(ROOT,"login","index.html"),"w",encoding="utf8").write(login.replace("__PAYLOAD__",payload))
+print("Klart: login/index.html (krypterad)")

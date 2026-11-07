@@ -14,7 +14,7 @@ Träna parsning av koine-grekiska substantiv och verb, kapitel för kapitel enli
 
 ## Lösenordsskydd
 
-`index.html` är krypterad med AES-256, och nyckeln tas fram ur lösenordet med PBKDF2 i 600 000 iterationer.
+`login/index.html` är krypterad med AES-256, och nyckeln tas fram ur lösenordet med PBKDF2 i 600 000 iterationer.
 
 - Repot innehåller varken lösenordet eller några glosor i klartext.
 - Den som inte har lösenordet ser bara inloggningssidan.
@@ -23,7 +23,7 @@ Träna parsning av koine-grekiska substantiv och verb, kapitel för kapitel enli
 Byt lösenord så här:
 
 1. Kör build-skriptet igen och ange det nya lösenordet.
-2. Ladda upp den nya `index.html`.
+2. Ladda upp den nya `login/index.html`.
 
 Gamla sparade inloggningar slutar då att fungera.
 
@@ -38,11 +38,12 @@ Gamla sparade inloggningar slutar då att fungera.
 
 | Fil | Innehåll |
 |---|---|
-| `index.html` | Den färdiga, krypterade appen: en enda fil som innehåller all data |
+| `index.html` | Onepagern för studenter på startadressen |
+| `login/index.html` | Den färdiga, krypterade appen: en enda fil som innehåller all data |
 | `src/login.html` | Inloggningssidan |
 | `src/app.html` | Mallen, alltså appens HTML, CSS och JavaScript utan data |
 | `scripts/morph.py`, `scripts/analyze.py` | Motorn för morfologisk nedbrytning |
-| `scripts/build.py` | Bygger om `index.html` från glosdatabasen och MorphGNT |
+| `scripts/build.py` | Bygger om `login/index.html` från glosdatabasen och MorphGNT |
 
 Gör så här för att ändra något:
 
