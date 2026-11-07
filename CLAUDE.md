@@ -10,7 +10,7 @@ Appen är en enda statisk HTML-fil som publiceras med GitHub Pages. Den har inge
 |---|---|
 | `src/app.html` | Själva appen: HTML, CSS och JS. Platshållaren `__DATA__` byts mot data vid bygget. **Här görs nästan alla ändringar.** |
 | `src/login.html` | Inloggningssidan med konton via Supabase (logga in, skapa konto, glömt och nytt lösenord). Platshållaren `__PAYLOAD__` byts mot den krypterade appen. |
-| `supabase/schema.sql` | Databasens tabeller och regler i Supabase. Körs i Supabase → SQL Editor. Innehåller inga hemligheter. |
+| `supabase/schema.sql`, `supabase/mina-sidor.sql` | Databasens tabeller och regler i Supabase. Körs i Supabase → SQL Editor, i den ordningen. Innehåller inga hemligheter. |
 | `scripts/build.py` | Bygger `login/index.html` (se nedan). |
 | `scripts/lexikon.py` | Den öppna ordbasen: glosor från STEPBible TBESG, Strong’s-nummer från MACULA Greek och substantivens uppslagsform (genitiv och genus) ur MorphGNT. |
 | `scripts/principalformer.tsv`, `scripts/principalformer_rattelser.tsv` | Principalformer för alla verb (öppna, committas) och egna rättelser. |
@@ -58,6 +58,17 @@ Bygget kräver `pip install cryptography`. Det tar några minuter, och analysste
 ### Konton (Supabase)
 
 Studenterna skapar konto och loggar in på `/login/`. Supabase sköter konton, lösenord och e-post (via Resend från `noreply@kingofparsing.com`). Efter inloggningen hämtar sidan lösenordet till appen ur tabellen `app_secret`, som bara inloggade får läsa, och låser upp appen som förut. Nyckeln sparas i `kop-key-<id>` tills användaren loggar ut. Inloggningssidan lägger `window.KOP` (`email`, `save(rad)`, `signOut()`) åt appen, som sparar varje svar i tabellen `answers` och visar knappen Logga ut. Project URL och publishable key står i `src/login.html`. De är offentliga. Den hemliga nyckeln (secret/service_role) får aldrig hamna i repot. **När lösenordet byts vid bygget måste det också bytas i `app_secret`**, annars kan ingen öppna appen. Duff och Croy är tillfälligt borttagna ur `KURSER` i `build.py`, och bokväljaren döljs när det bara finns en bok.
+
+### Mina sidor, titlar och svagheter
+
+Knappen Mina sidor uppe till höger, bredvid nivån med sin progressbar, öppnar Mina sidor (`renderMe` i `src/app.html`). Appen hämtar användarens svar ur `answers` vid start (`loadAccount`, sparas i `HIST`) och räknar fram allt i webbläsaren:
+
+- **Nivåer** (i koden `TITLES`): 17 nivåer, en per grammatiskt moment i `MOMENTS` (Bonde … Prins) plus King of Parsing. Mina sidor visar bara nuvarande nivå och nästa, med en lång progressbar, så att en ny nivå blir en överraskning. Ett moment är behärskat vid minst 16 rätt av de senaste 20 formerna utan ledtråd (`NEED`, `PASS`). Högsta nivån sparas i `profiles.title` och förloras aldrig. En popup visas när en ny nivå nås (`titlePopup`).
+- **Kungaprovet:** låses upp vid titel 16. 50 slumpade former från hela NT i rad utan fel och utan ledtråd (`KING_LEN`). Klarat prov sparas i `profiles.king_at`.
+- **Statistik:** totalt antal parsade ord, andel rätt och fel och en linjegraf över de senaste 14 dagarna (`statsHTML`).
+- **Att öva på:** träffsäkerhet per fält, vanligaste förväxlingar och fenomen (`phenOf`, som läser sprängskissens delar och förklaringar). ”Öva mina svagheter” väljer former med `weakForms`.
+- **Kapitel som fylls:** kapitelrutorna fylls nedifrån med grönt efter andelen inlärda ord (`wordMastery`: de två senaste svaren rätt, det senaste utan ledtråd).
+- **Min kurs, Tyck till och Konto:** `profiles`, `feedback` (högst 200 tecken, kryssruta för citat) och `delete_my_account()`. Tabellerna finns i `supabase/mina-sidor.sql`.
 
 ### Testa lokalt
 

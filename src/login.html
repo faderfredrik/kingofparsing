@@ -249,6 +249,8 @@ async function unlock(){
       try{localStorage.setItem(KEY,toB64(await crypto.subtle.exportKey('raw',key)))}catch(e){}
     }
     window.KOP={
+      sb,
+      uid:user&&user.id,
       email:user&&user.email,
       save(row){return sb.from('answers').insert(row).then(r=>{if(r.error)console.warn('KOP: svaret sparades inte',r.error.message)},e=>console.warn('KOP: svaret sparades inte',e))},
       async signOut(){forgetKeys();try{await sb.auth.signOut()}catch(e){}location.replace(HERE)}
