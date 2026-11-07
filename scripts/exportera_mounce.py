@@ -9,7 +9,9 @@ HERE=os.path.dirname(os.path.abspath(__file__)); ROOT=os.path.dirname(HERE)
 DB=os.path.abspath(sys.argv[1]) if len(sys.argv)>1 else os.path.join(HERE,"glosor.sqlite")
 OUT=os.path.join(ROOT,"kurser","mounce.tsv"); os.makedirs(os.path.dirname(OUT),exist_ok=True)
 def nfc(s): return u.normalize('NFC',s.strip())
-alias={'ἄρχομαι':'ἄρχω','πορεύω':'πορεύομαι','κοιμάω':'κοιμάομαι','κολλάω':'κολλάομαι','προσκαλέω':'προσκαλέομαι','προσλαμβάνω':'προσλαμβάνομαι','σέβω':'σέβομαι','ἐκπλήσσω':'ἐκπλήσσομαι','ἐλεέω':'ἐλεάω','ἐντέλλω':'ἐντέλλομαι','Ᾰδης':'ᾅδης','σατανᾶς':'Σατανᾶς','ἱερόν':'ἱερός','ἀφίστημι':'ἀφίσταμαι'}
+alias={'ἄρχομαι':'ἄρχω','πορεύω':'πορεύομαι','κοιμάω':'κοιμάομαι','κολλάω':'κολλάομαι','προσκαλέω':'προσκαλέομαι','προσλαμβάνω':'προσλαμβάνομαι','σέβω':'σέβομαι','ἐκπλήσσω':'ἐκπλήσσομαι','ἐλεέω':'ἐλεάω','ἐντέλλω':'ἐντέλλομαι','Ᾰδης':'ᾅδης','σατανᾶς':'Σατανᾶς','ἱερόν':'ἱερός','ἀφίστημι':'ἀφίσταμαι','ἔξεστιν':'ἔξεστι(ν)'}
+# Ord som står som U (övrigt) i glosor.sqlite men egentligen är verb
+TYPFIX={'ἔξεστιν':'V','ἐξομολογέω':'V'}
 rows=sqlite3.connect(DB).execute("select kapitel,typ,ord,principalformer from glosor where typ in ('N','V','U') order by kapitel,id").fetchall()
 n=0
 with open(OUT,"w",encoding="utf8",newline="") as f:
@@ -17,6 +19,7 @@ with open(OUT,"w",encoding="utf8",newline="") as f:
     w.writerow(["lemma","uppslagsord","ordklass","kapitel","principalformer"])
     for ch,t,word,pp in rows:
         word=re.sub(r'\s+',' ',nfc(word)); head=nfc(word.split(',')[0])
+        t=TYPFIX.get(head,t)
         if t=='U':
             if word.count(',')<2 or head in ('ἐμαυτοῦ','χρυσοῦς'): continue
             t='N'

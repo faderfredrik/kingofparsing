@@ -73,7 +73,7 @@ button.pill:hover{background:var(--surface-2)}
   .top-meta{order:3;width:100%;justify-content:flex-start}
   .top-meta:empty{display:none}
 }
-.hidden{display:none!important}
+.hidden,[hidden]{display:none!important}
 
 /* setup */
 .intro h1{font-family:var(--greek);font-size:clamp(30px,5vw,42px);line-height:1.1;margin:8px 0 8px;font-weight:700}
@@ -240,7 +240,7 @@ kbd{font-family:var(--ui);background:var(--surface);border-radius:6px;padding:2p
       <h1 data-i="h1"></h1>
       <p data-i="intro"></p>
     </div>
-    <section class="block">
+    <section class="block" id="bookBlock">
       <h2 data-i="book"></h2>
       <p class="sub" id="bookSub"></p>
       <div class="seg" id="bookSeg" role="group" data-ia="book"></div>
@@ -406,7 +406,7 @@ const T={
   missH:'Former att \u00f6va mer p\u00e5', missSub:n=>`${n===1?'En form':n+' former'} blev fel den h\u00e4r omg\u00e5ngen.`, from:'av',
   flawless:'Felfritt', flawlessSub:'Alla former r\u00e4tt. Prova fler kapitel eller en l\u00e4ngre omg\u00e5ng.',
   practiceMissed:'\u00d6va p\u00e5 missade', changeSettings:'\u00c4ndra inst\u00e4llningar', newRound:'Ny omg\u00e5ng',
-  topScore:(c,a)=>`R\u00e4tt <strong>${c}</strong> av ${a}`, end:'Avsluta', topTotal:(c,a)=>`Totalt <strong>${c}</strong> r\u00e4tt av ${a}`
+  topScore:(c,a)=>`R\u00e4tt <strong>${c}</strong> av ${a}`, end:'Avsluta', logout:'Logga ut', topTotal:(c,a)=>`Totalt <strong>${c}</strong> r\u00e4tt av ${a}`
  },
  en:{
   and:'and', locale:'en-GB',
@@ -452,7 +452,7 @@ const T={
   missH:'Forms to practise more', missSub:n=>`${n===1?'One form was':n+' forms were'} wrong this session.`, from:'from',
   flawless:'Flawless', flawlessSub:'All forms correct. Try more chapters or a longer session.',
   practiceMissed:'Practise missed forms', changeSettings:'Change settings', newRound:'New session',
-  topScore:(c,a)=>`Correct <strong>${c}</strong> of ${a}`, end:'End', topTotal:(c,a)=>`Total <strong>${c}</strong> of ${a} correct`
+  topScore:(c,a)=>`Correct <strong>${c}</strong> of ${a}`, end:'End', logout:'Log out', topTotal:(c,a)=>`Total <strong>${c}</strong> of ${a} correct`
  }
 };
 let LANG='sv',L=LBL.sv;
@@ -553,6 +553,7 @@ function buildPool(){
 const $=id=>document.getElementById(id);
 let lastClicked=null;
 function renderSetup(){
+  $('bookBlock').hidden=BOOKLIST.length<2;
   const bs=$('bookSeg');
   bs.innerHTML=BOOKLIST.map(b=>`<button data-b="${b.id}" aria-pressed="${b.id===B.id}">${esc(b.name)}</button>`).join('');
   bs.querySelectorAll('button').forEach(b=>b.onclick=()=>{switchBook(b.dataset.b);lastClicked=null;buildLevelSel();save();renderSetup()});
@@ -966,6 +967,7 @@ function check(){
   sess.answered++;life.a++;
   if(q.ok){sess.correct++;life.c++}else sess.misses.push(q.f);
   saveLife();
+  if(window.KOP) window.KOP.save({form:q.f.f,lemma:q.word.h,expected:q.best,answer:code,ok:q.ok,parse_ok:q.parseOK,lex_ok:q.lexOK,hint:q.hint||0,book:S.book});
   renderQuiz();
   const r=$('resultBox');if(r.firstChild) r.firstChild.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'nearest'});
 }
@@ -1016,7 +1018,10 @@ function setTop(view){
   if(view==='quiz'){
     m.innerHTML=`<span class="pill">${tx('topScore',sess.correct,sess.answered)}</span><button class="pill" id="endBtn">${tx('end')}</button>`;
     $('endBtn').onclick=()=>{if(sess.answered)renderSummary();else{show('setup');renderSetup()}};
-  } else m.innerHTML=life.a?`<span class="pill">${tx('topTotal',life.c,life.a)}</span>`:'';
+  } else {
+    m.innerHTML=(life.a?`<span class="pill">${tx('topTotal',life.c,life.a)}</span>`:'')+(window.KOP?`<button class="pill" id="outBtn" title="${esc(window.KOP.email||'')}">${tx('logout')}</button>`:'');
+    if(window.KOP) $('outBtn').onclick=()=>window.KOP.signOut();
+  }
 }
 let actFns=[];
 function setActions(list,hint){

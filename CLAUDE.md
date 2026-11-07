@@ -9,7 +9,8 @@ Appen är en enda statisk HTML-fil som publiceras med GitHub Pages. Den har inge
 | Fil | Roll |
 |---|---|
 | `src/app.html` | Själva appen: HTML, CSS och JS. Platshållaren `__DATA__` byts mot data vid bygget. **Här görs nästan alla ändringar.** |
-| `src/login.html` | Inloggningssidan. Platshållaren `__PAYLOAD__` byts mot den krypterade appen. |
+| `src/login.html` | Inloggningssidan med konton via Supabase (logga in, skapa konto, glömt och nytt lösenord). Platshållaren `__PAYLOAD__` byts mot den krypterade appen. |
+| `supabase/schema.sql` | Databasens tabeller och regler i Supabase. Körs i Supabase → SQL Editor. Innehåller inga hemligheter. |
 | `scripts/build.py` | Bygger `login/index.html` (se nedan). |
 | `scripts/lexikon.py` | Den öppna ordbasen: glosor från STEPBible TBESG, Strong’s-nummer från MACULA Greek och substantivens uppslagsform (genitiv och genus) ur MorphGNT. |
 | `scripts/principalformer.tsv`, `scripts/principalformer_rattelser.tsv` | Principalformer för alla verb (öppna, committas) och egna rättelser. |
@@ -49,10 +50,14 @@ Bygget kräver `pip install cryptography`. Det tar några minuter, och analysste
 
 ### Regler som aldrig får brytas
 
-- **Lösenordet får aldrig skrivas in i någon fil, något commit-meddelande eller någon kod.** Skriptet frågar efter det med `getpass`, eller läser miljövariabeln `KOP_PASSWORD` som användaren själv sätter i terminalen. Fråga användaren i stället för att gissa.
+- **Lösenordet får aldrig skrivas in i någon fil, något commit-meddelande eller någon kod.** Samma lösenord ligger i tabellen `app_secret` i Supabase och läggs in där av användaren själv. Skriptet frågar efter det med `getpass`, eller läser miljövariabeln `KOP_PASSWORD` som användaren själv sätter i terminalen. Fråga användaren i stället för att gissa.
 - **`glosor.sqlite` och `kurser/` får aldrig committas.** Läroböckernas material är upphovsrättsskyddat. Repot är publikt, och därför finns kapitelindelningen bara i krypterad form i `login/index.html`. `.gitignore` utesluter `*.sqlite`, `kurser/` och `scripts/.cache/`.
 - Källhänvisningarna längst ned på startsidan krävs av CC BY-licenserna och får inte tas bort.
 - Bygg alltid om `login/index.html` efter en ändring i `src/` och committa båda filerna tillsammans.
+
+### Konton (Supabase)
+
+Studenterna skapar konto och loggar in på `/login/`. Supabase sköter konton, lösenord och e-post (via Resend från `noreply@kingofparsing.com`). Efter inloggningen hämtar sidan lösenordet till appen ur tabellen `app_secret`, som bara inloggade får läsa, och låser upp appen som förut. Nyckeln sparas i `kop-key-<id>` tills användaren loggar ut. Inloggningssidan lägger `window.KOP` (`email`, `save(rad)`, `signOut()`) åt appen, som sparar varje svar i tabellen `answers` och visar knappen Logga ut. Project URL och publishable key står i `src/login.html`. De är offentliga. Den hemliga nyckeln (secret/service_role) får aldrig hamna i repot. **När lösenordet byts vid bygget måste det också bytas i `app_secret`**, annars kan ingen öppna appen. Duff och Croy är tillfälligt borttagna ur `KURSER` i `build.py`, och bokväljaren döljs när det bara finns en bok.
 
 ### Testa lokalt
 

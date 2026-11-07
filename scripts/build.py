@@ -57,7 +57,10 @@ for r in csv.DictReader(open(KURS,encoding='utf8'),delimiter='\t'):
     words.append(dict(ch=ch,t=t,w=LEX.uppslagsord(L,head,t),h=head,m=m,pp=ppfor(L,t),L=L))
     lem2w[L].append(len(words)-1)
 # övriga läroböcker: lägg till substantiv och verb som saknas i grundlistan
-KURSER=[('mounce','Mounce','Basics of Biblical Greek'),('duff','Duff','The Elements of New Testament Greek'),('croy','Croy','A Primer of Biblical Greek')]
+# Duff och Croy är tillfälligt borttagna: kapitelindelningen är inte komplett och författarna är inte tillfrågade.
+# Lägg tillbaka dem här när det är klart:
+#   ('duff','Duff','The Elements of New Testament Greek'),('croy','Croy','A Primer of Biblical Greek')
+KURSER=[('mounce','Mounce','Basics of Biblical Greek')]
 KDIR=os.path.dirname(KURS)
 nforms=collections.defaultdict(set)
 for p in lines:
@@ -79,11 +82,16 @@ forms={}  # (form,widx)->dict
 verses=collections.defaultdict(list)
 for i,p in enumerate(lines):
     verses[p[0]].append(p[3])
+# MorphGNT för både det opersonliga δεῖ (”det är nödvändigt”) och δέομαι (”be, bönfalla”) till δέω (”binda”).
+# Här flyttas de formerna till rätt ord. δέομαι finns inte i ordlistan, så de formerna hoppas över.
+FORMLEMMA={('δέω',f):'δεῖ' for f in ('δεῖ','ἔδει','δεῖν','δέον','δέοντα','δέῃ')}
+FORMLEMMA.update({('δέω',f):'δέομαι' for f in ('δεήθητε','ἐδεήθη','ἐδεήθην','δεόμεθα','δεόμενος','ἐδεῖτο')})
 vpos=collections.Counter()
 order=[]
 for p in lines:
     bcv=p[0]; idx=vpos[bcv]; vpos[bcv]+=1
     pos,code=p[1],p[2]; L=nfc(p[6])
+    L=FORMLEMMA.get((L,nfc(p[5])),L)
     if L not in lem2w: continue
     cand=lem2w[L]
     if pos=='V-':

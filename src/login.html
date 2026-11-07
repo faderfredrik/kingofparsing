@@ -8,11 +8,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js" integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug" crossorigin="anonymous"></script>
 <style>
-:root{--bg:#E8ECF3;--surface:#FFFFFF;--surface-2:#E3E8F1;--ink:#16213F;--muted:#5C6784;--gold:#F0B232;--gold-ink:#2B1E00;--wrong:#C63F2A;--hero:#1C337A;--lapis:#2346A8;
+:root{--bg:#E8ECF3;--surface:#FFFFFF;--surface-2:#E3E8F1;--ink:#16213F;--muted:#5C6784;--gold:#F0B232;--gold-ink:#2B1E00;--wrong:#C63F2A;--right:#1E8A5A;--hero:#1C337A;--lapis:#2346A8;
   box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0D1530;--surface:#16214A;--surface-2:#1F2C5C;--ink:#EEF1FA;--muted:#9BA7C8;--gold:#F4BC45;--gold-ink:#241900;--wrong:#FF8A75;--hero:#1B2C69;--lapis:#5677E0;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#0D1530;--surface:#16214A;--surface-2:#1F2C5C;--ink:#EEF1FA;--muted:#9BA7C8;--gold:#F4BC45;--gold-ink:#241900;--wrong:#FF8A75;--hero:#1B2C69;--lapis:#5677E0;color-scheme:dark}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0D1530;--surface:#16214A;--surface-2:#1F2C5C;--ink:#EEF1FA;--muted:#9BA7C8;--gold:#F4BC45;--gold-ink:#241900;--wrong:#FF8A75;--right:#5FD39B;--hero:#1B2C69;--lapis:#7A95EA;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0D1530;--surface:#16214A;--surface-2:#1F2C5C;--ink:#EEF1FA;--muted:#9BA7C8;--gold:#F4BC45;--gold-ink:#241900;--wrong:#FF8A75;--right:#5FD39B;--hero:#1B2C69;--lapis:#7A95EA;color-scheme:dark}
 *,*::before,*::after{box-sizing:inherit}
 html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;display:grid;place-items:center;padding:20px}
@@ -21,16 +22,24 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Figtree",system
 h1{font-family:"Cinzel","Trajan Pro",Georgia,serif;font-weight:800;font-size:28px;letter-spacing:.01em;word-spacing:-.12em;margin:0 0 6px;line-height:1.1;white-space:nowrap}
 h1 .of{font-size:.62em;font-weight:600;margin:0 .1em}
 p.sub{color:var(--muted);margin:0 0 24px;font-size:15px}
-label{display:block;text-align:left;font-weight:600;font-size:14px;color:var(--muted);margin-bottom:6px}
-input[type=password]{width:100%;font:inherit;font-size:17px;padding:13px 14px;border-radius:12px;border:0;background:var(--surface-2);color:var(--ink)}
+label{display:block;text-align:left;font-weight:600;font-size:14px;color:var(--muted);margin:0 0 6px}
+input[type=email],input[type=password]{width:100%;font:inherit;font-size:17px;padding:13px 14px;border-radius:12px;border:0;background:var(--surface-2);color:var(--ink);margin-bottom:14px}
+.help{font-size:13px;color:var(--muted);text-align:left;margin:-8px 0 14px}
 input:focus-visible,button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
-.remember{display:flex;align-items:center;gap:8px;margin:14px 0 18px;font-size:14px;color:var(--muted);text-align:left}
-.remember input{width:18px;height:18px;accent-color:var(--gold)}
-button{width:100%;border:0;background:var(--gold);color:var(--gold-ink);border-radius:12px;padding:14px;font:inherit;font-weight:700;font-size:16px;cursor:pointer}
+button{width:100%;border:0;background:var(--gold);color:var(--gold-ink);border-radius:12px;padding:14px;font:inherit;font-weight:700;font-size:16px;cursor:pointer;margin-top:4px}
 button:disabled{opacity:.6;cursor:default}
+button.link{width:auto;background:none;color:var(--lapis);padding:2px 0;margin:0;font-size:14px;font-weight:700;border-radius:4px}
+button.link:hover{text-decoration:underline}
+.forgot{display:flex;justify-content:flex-end;margin:-6px 0 12px}
+.alt{font-size:14px;color:var(--muted);margin:20px 0 0}
 .err{color:var(--wrong);font-size:14px;font-weight:600;min-height:1.4em;margin:12px 0 0}
+.err:empty{min-height:0;margin:0}
+.msg{font-size:16px;line-height:1.5;margin:0 0 18px}
+.msg.ok{color:var(--right);font-weight:600}
+.busy{color:var(--muted);font-size:15px;margin:8px 0}
+[hidden]{display:none!important}
 .langsw{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));right:14px;display:inline-flex;background:var(--surface);border-radius:999px;padding:3px;gap:2px}
-.langsw button{width:auto;border:0;background:transparent;border-radius:999px;padding:5px 9px;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;line-height:1;color:var(--muted)}
+.langsw button{width:auto;margin:0;border:0;background:transparent;border-radius:999px;padding:5px 9px;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;line-height:1;color:var(--muted)}
 .langsw button:hover{background:var(--surface-2)}
 .langsw button[aria-pressed="true"]{background:var(--lapis);color:#fff}
 .langsw button[aria-pressed="false"] .flag{opacity:.6}
@@ -49,68 +58,268 @@ button:disabled{opacity:.6;cursor:default}
 <main class="card">
   <svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><path fill="var(--gold)" d="M2.5 14C3.5 5 11 0.5 20 0.5S36.5 5 37.5 14L32.6 14C31 9.5 26.5 6.6 20 6.6S9 9.5 7.4 14Z"/><path fill="var(--gold)" fill-rule="evenodd" d="M8 17C8 11 13 8 20 8S32 11 32 17L32 28C32 32 29 35.5 25 38.5L15 38.5C11 35.5 8 32 8 28Z M11.5 18.5L18.6 19.4L18.6 26L21.4 26L21.4 19.4L28.5 18.5L28 22L22.6 23.8L22.4 38.5L17.6 38.5L17.4 23.8L12 22Z"/></svg>
   <h1>King <span class="of">of</span> Parsing</h1>
-  <p class="sub" data-i="sub"></p>
-  <form id="f" autocomplete="on">
-    <input type="text" name="username" value="king-of-parsing" autocomplete="username" hidden>
-    <label for="pw" data-i="pw"></label>
-    <input id="pw" type="password" autocomplete="current-password" required autofocus>
-    <label class="remember"><input id="rem" type="checkbox" checked> <span data-i="rem"></span></label>
-    <button id="go" type="submit" data-i="go"></button>
-    <p class="err" id="err" role="alert"></p>
+  <p class="sub" id="sub"></p>
+
+  <!-- Laddar / låser upp -->
+  <div id="vBusy"><p class="busy" id="busyText"></p></div>
+
+  <!-- Logga in -->
+  <form id="vIn" hidden novalidate>
+    <label for="inEmail" data-i="email"></label>
+    <input id="inEmail" type="email" autocomplete="username" required>
+    <label for="inPw" data-i="pw"></label>
+    <input id="inPw" type="password" autocomplete="current-password" required>
+    <div class="forgot"><button type="button" class="link" data-go="forgot" data-i="toForgot"></button></div>
+    <button type="submit" data-i="signIn"></button>
+    <p class="err" role="alert"></p>
+    <p class="alt"><span data-i="noAccount"></span> <button type="button" class="link" data-go="up" data-i="toUp"></button></p>
   </form>
+
+  <!-- Skapa konto -->
+  <form id="vUp" hidden novalidate>
+    <label for="upEmail" data-i="email"></label>
+    <input id="upEmail" type="email" autocomplete="username" required>
+    <label for="upPw" data-i="newPw"></label>
+    <input id="upPw" type="password" autocomplete="new-password" minlength="8" required>
+    <p class="help" data-i="pwHelp"></p>
+    <button type="submit" data-i="signUp"></button>
+    <p class="err" role="alert"></p>
+    <p class="alt"><span data-i="haveAccount"></span> <button type="button" class="link" data-go="in" data-i="toIn"></button></p>
+  </form>
+
+  <!-- Glömt lösenord -->
+  <form id="vForgot" hidden novalidate>
+    <label for="fgEmail" data-i="email"></label>
+    <input id="fgEmail" type="email" autocomplete="username" required>
+    <button type="submit" data-i="sendLink"></button>
+    <p class="err" role="alert"></p>
+    <p class="alt"><button type="button" class="link" data-go="in" data-i="back"></button></p>
+  </form>
+
+  <!-- Nytt lösenord (efter länken i mejlet) -->
+  <form id="vReset" hidden novalidate>
+    <input type="email" autocomplete="username" id="rsEmail" hidden>
+    <label for="rsPw" data-i="newPw"></label>
+    <input id="rsPw" type="password" autocomplete="new-password" minlength="8" required>
+    <p class="help" data-i="pwHelp"></p>
+    <button type="submit" data-i="savePw"></button>
+    <p class="err" role="alert"></p>
+  </form>
+
+  <!-- Meddelande -->
+  <div id="vMsg" hidden>
+    <p class="msg" id="msgText"></p>
+    <button type="button" class="link" id="msgBtn" data-go="in" data-i="toIn"></button>
+  </div>
 </main>
 <script id="payload" type="application/json">__PAYLOAD__</script>
 <script>
 (function(){
+const SUPABASE_URL='https://ggknhdxvtijbhozdfhjl.supabase.co';
+const SUPABASE_KEY='sb_publishable_l9K8CdvHYwboYr2Ekr77sw_Qnh2JBaQ'; // offentlig nyckel, skyddas av databasens regler
 const P=JSON.parse(document.getElementById('payload').textContent);
 const KEY='kop-key-'+P.id;
-/* språk: samma inställning som appen (kop-settings.lang) */
+const HERE=location.origin+location.pathname;
+
+/* ---------- språk: samma inställning som appen (kop-settings.lang) ---------- */
 const T={
-  sv:{sub:'Ange lösenordet du har fått för att öppna appen.',pw:'Lösenord',rem:'Kom ihåg mig på den här enheten',go:'Logga in',busy:'Låser upp …',bad:'Fel lösenord. Kontrollera stavningen och försök igen.'},
-  en:{sub:'Enter the password you were given to open the app.',pw:'Password',rem:'Remember me on this device',go:'Log in',busy:'Unlocking …',bad:'Wrong password. Check the spelling and try again.'}
+  sv:{
+    subIn:'Logga in för att öppna appen.',subUp:'Skapa ett konto för att börja parsa.',subForgot:'Ange din e-post så skickar vi en länk där du väljer ett nytt lösenord.',subReset:'Välj ett nytt lösenord.',subMsg:'',
+    email:'E-post',pw:'Lösenord',newPw:'Nytt lösenord',pwHelp:'Minst 8 tecken.',
+    signIn:'Logga in',signUp:'Skapa konto',sendLink:'Skicka länk',savePw:'Spara lösenord',
+    toForgot:'Glömt lösenordet?',noAccount:'Inget konto än?',toUp:'Skapa konto',haveAccount:'Har du redan ett konto?',toIn:'Logga in',back:'Tillbaka till inloggningen',
+    busy:'Ett ögonblick …',unlocking:'Öppnar appen …',
+    checkMail:'Nästan klart! Vi har skickat ett mejl till {e}. Klicka på länken i mejlet för att bekräfta ditt konto.',
+    resetSent:'Om det finns ett konto för {e} har vi skickat en länk dit. Klicka på den för att välja ett nytt lösenord.',
+    eEmail:'Skriv en giltig e-postadress.',ePw:'Skriv ditt lösenord.',eShort:'Lösenordet behöver vara minst 8 tecken.',
+    eCreds:'Fel e-post eller lösenord.',eConfirm:'Du behöver bekräfta din e-post först. Titta i inkorgen efter mejlet från King of Parsing.',
+    eExists:'Det finns redan ett konto med den e-postadressen. Logga in i stället.',eWeak:'Lösenordet är för svagt. Välj ett längre eller mindre vanligt lösenord.',
+    eRate:'För många försök just nu. Vänta en stund och försök igen.',eSame:'Det nya lösenordet måste skilja sig från det gamla.',
+    eLink:'Länken har gått ut eller redan använts. Be om en ny.',eNet:'Det gick inte att nå servern. Kontrollera internetanslutningen och försök igen.',
+    eKey:'Appen kunde inte öppnas just nu. Försök igen om en stund.',eOther:'Något gick fel: {m}',signOut:'Logga ut'
+  },
+  en:{
+    subIn:'Log in to open the app.',subUp:'Create an account to start parsing.',subForgot:'Enter your email and we’ll send you a link to choose a new password.',subReset:'Choose a new password.',subMsg:'',
+    email:'Email',pw:'Password',newPw:'New password',pwHelp:'At least 8 characters.',
+    signIn:'Log in',signUp:'Create account',sendLink:'Send link',savePw:'Save password',
+    toForgot:'Forgot your password?',noAccount:'No account yet?',toUp:'Create one',haveAccount:'Already have an account?',toIn:'Log in',back:'Back to log in',
+    busy:'One moment …',unlocking:'Opening the app …',
+    checkMail:'Almost done! We’ve sent an email to {e}. Click the link in it to confirm your account.',
+    resetSent:'If there is an account for {e}, we’ve sent a link there. Click it to choose a new password.',
+    eEmail:'Enter a valid email address.',ePw:'Enter your password.',eShort:'The password needs to be at least 8 characters.',
+    eCreds:'Wrong email or password.',eConfirm:'Please confirm your email first. Look in your inbox for the email from King of Parsing.',
+    eExists:'There is already an account with that email. Log in instead.',eWeak:'The password is too weak. Choose a longer or less common one.',
+    eRate:'Too many attempts right now. Wait a moment and try again.',eSame:'The new password must be different from the old one.',
+    eLink:'The link has expired or has already been used. Ask for a new one.',eNet:'Could not reach the server. Check your connection and try again.',
+    eKey:'The app could not be opened right now. Please try again in a moment.',eOther:'Something went wrong: {m}',signOut:'Log out'
+  }
 };
-let LANG='sv';
+let LANG='sv',VIEW='busy',MSG=null;
+const $=id=>document.getElementById(id);
+const tx=(k,o)=>(T[LANG][k]||k).replace(/\{(\w)\}/g,(_,x)=>o&&o[x]!=null?o[x]:'');
 function readSettings(){try{return JSON.parse(localStorage.getItem('kop-settings')||'null')||{}}catch(e){return {}}}
 function defaultLang(){try{const ls=navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language||''];return ls.some(x=>/^sv\b/i.test(x))?'sv':'en'}catch(e){return 'sv'}}
 function setLang(l){
   LANG=T[l]?l:'sv';
   document.documentElement.lang=LANG;
-  document.querySelectorAll('[data-i]').forEach(e=>{e.textContent=T[LANG][e.dataset.i]});
+  document.querySelectorAll('[data-i]').forEach(e=>{e.textContent=tx(e.dataset.i)});
   document.querySelectorAll('#langSw button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.lang===LANG));
-  const er=document.getElementById('err');if(er.textContent) er.textContent=T[LANG].bad;
+  document.querySelectorAll('.err').forEach(e=>{if(e.dataset.k) e.textContent=tx(e.dataset.k,{m:e.dataset.m})});
+  paint();
 }
-setLang(readSettings().lang||defaultLang());
 document.querySelectorAll('#langSw button').forEach(b=>b.onclick=()=>{
   setLang(b.dataset.lang);
   const s=readSettings();s.lang=LANG;try{localStorage.setItem('kop-settings',JSON.stringify(s))}catch(e){}
 });
+
+/* ---------- vyer ---------- */
+const VIEWS={busy:'vBusy',in:'vIn',up:'vUp',forgot:'vForgot',reset:'vReset',msg:'vMsg'};
+const SUBS={in:'subIn',up:'subUp',forgot:'subForgot',reset:'subReset'};
+function paint(){
+  $('sub').textContent=SUBS[VIEW]?tx(SUBS[VIEW]):'';
+  $('sub').hidden=!SUBS[VIEW];
+  if(VIEW==='busy') $('busyText').textContent=tx($('busyText').dataset.k||'busy');
+  if(VIEW==='msg'&&MSG){$('msgText').textContent=tx(MSG.k,MSG.o);$('msgText').className='msg'+(MSG.ok?' ok':'');}
+}
+function show(v,carryEmail){
+  const prev=VIEWS[VIEW]&&$(VIEWS[VIEW]);
+  const email=prev&&prev.querySelector('input[type=email]')?prev.querySelector('input[type=email]').value:'';
+  VIEW=v;
+  Object.entries(VIEWS).forEach(([k,id])=>{$(id).hidden=k!==v});
+  document.querySelectorAll('.err').forEach(e=>{e.textContent='';delete e.dataset.k});
+  const cur=$(VIEWS[v]);
+  const em=cur.querySelector('input[type=email]:not([hidden])');
+  if(em&&carryEmail!==false&&email&&!em.value) em.value=email;
+  paint();
+  const first=cur.querySelector('input:not([hidden])');
+  if(first) (em&&em.value&&cur.querySelector('input[type=password]')||first).focus();
+}
+function busy(k){$('busyText').dataset.k=k;show('busy')}
+function message(k,o,ok){MSG={k,o,ok};show('msg')}
+document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.go)));
+function fail(form,k,m){const e=form.querySelector('.err');e.dataset.k=k;e.dataset.m=m||'';e.textContent=tx(k,{m});const b=form.querySelector('button[type=submit]');if(b)b.disabled=false}
+function errKey(err){
+  const c=(err&&(err.code||err.error_code))||'',s=((err&&err.message)||'').toLowerCase();
+  if(c==='invalid_credentials'||s.includes('invalid login')) return 'eCreds';
+  if(c==='email_not_confirmed'||s.includes('not confirmed')) return 'eConfirm';
+  if(c==='user_already_exists'||c==='email_exists'||s.includes('already registered')) return 'eExists';
+  if(c==='weak_password'||s.includes('weak')) return 'eWeak';
+  if(c==='same_password'||s.includes('different from the old')) return 'eSame';
+  if(c.startsWith('over_')||(err&&err.status===429)||s.includes('rate limit')) return 'eRate';
+  if(c==='otp_expired'||s.includes('expired')) return 'eLink';
+  if(s.includes('failed to fetch')||s.includes('network')) return 'eNet';
+  return 'eOther';
+}
+const validEmail=v=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+
+/* ---------- kryptering: samma som tidigare, men lösenordet hämtas från Supabase ---------- */
 const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 const toB64=buf=>btoa(String.fromCharCode(...new Uint8Array(buf)));
-async function open(key){
+async function decrypt(key){
   const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64(P.iv)},key,b64(P.ct));
-  const html=await new Response(new Blob([pt]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
-  document.open();document.write(html);document.close();
+  return new Response(new Blob([pt]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
 }
 async function derive(pw){
   const base=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
   return crypto.subtle.deriveKey({name:'PBKDF2',salt:b64(P.salt),iterations:P.iter,hash:'SHA-256'},base,{name:'AES-GCM',length:256},true,['decrypt']);
 }
-// automatic login on remembered devices
-try{const k=localStorage.getItem(KEY);if(k){crypto.subtle.importKey('raw',b64(k),'AES-GCM',true,['decrypt']).then(open).catch(()=>{try{localStorage.removeItem(KEY)}catch(e){}})}}catch(e){}
-const f=document.getElementById('f'),err=document.getElementById('err'),go=document.getElementById('go');
-f.addEventListener('submit',async e=>{
-  e.preventDefault();err.textContent='';go.disabled=true;go.textContent=T[LANG].busy;
+function forgetKeys(){try{Object.keys(localStorage).filter(k=>k.startsWith('kop-key-')).forEach(k=>localStorage.removeItem(k))}catch(e){}}
+
+/* ---------- Supabase ---------- */
+if(!window.supabase){busy('busy');$('busyText').textContent=tx('eNet');return}
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'implicit'}});
+const hash=new URLSearchParams(location.hash.slice(1));
+let recovery=hash.get('type')==='recovery';
+const linkError=hash.get('error_code')||hash.get('error');
+sb.auth.onAuthStateChange(ev=>{if(ev==='PASSWORD_RECOVERY'&&VIEW!=='reset'){recovery=true;show('reset')}});
+
+let user=null,opening=false;
+async function unlock(){
+  if(opening) return;opening=true;
+  busy('unlocking');
   try{
-    const key=await derive(document.getElementById('pw').value);
-    const raw=await crypto.subtle.exportKey('raw',key);
-    await crypto.subtle.decrypt({name:'AES-GCM',iv:b64(P.iv)},key,b64(P.ct)); // throws if wrong password
-    if(document.getElementById('rem').checked){try{localStorage.setItem(KEY,toB64(raw))}catch(e){}}
-    await open(key);
+    let html=null;
+    try{const k=localStorage.getItem(KEY);if(k) html=await decrypt(await crypto.subtle.importKey('raw',b64(k),'AES-GCM',true,['decrypt']))}catch(e){try{localStorage.removeItem(KEY)}catch(_){}}
+    if(html===null){
+      const {data,error}=await sb.from('app_secret').select('password').eq('id',1).maybeSingle();
+      if(error||!data) throw error||new Error('no key');
+      const key=await derive(data.password);
+      html=await decrypt(key);
+      forgetKeys();
+      try{localStorage.setItem(KEY,toB64(await crypto.subtle.exportKey('raw',key)))}catch(e){}
+    }
+    window.KOP={
+      email:user&&user.email,
+      save(row){return sb.from('answers').insert(row).then(r=>{if(r.error)console.warn('KOP: svaret sparades inte',r.error.message)},e=>console.warn('KOP: svaret sparades inte',e))},
+      async signOut(){forgetKeys();try{await sb.auth.signOut()}catch(e){}location.replace(HERE)}
+    };
+    document.open();document.write(html);document.close();
   }catch(x){
-    err.textContent=T[LANG].bad;
-    go.disabled=false;go.textContent=T[LANG].go;
+    opening=false;
+    message('eKey');
+    $('msgBtn').textContent=tx('signOut');
+    $('msgBtn').onclick=async()=>{forgetKeys();await sb.auth.signOut();location.replace(HERE)};
   }
+}
+
+/* logga in */
+$('vIn').addEventListener('submit',async e=>{
+  e.preventDefault();const f=e.target,email=$('inEmail').value.trim(),pw=$('inPw').value;
+  if(!validEmail(email)) return fail(f,'eEmail');
+  if(!pw) return fail(f,'ePw');
+  f.querySelector('button[type=submit]').disabled=true;
+  const {data,error}=await sb.auth.signInWithPassword({email,password:pw});
+  if(error) return fail(f,errKey(error),error.message);
+  user=data.user;unlock();
 });
+/* skapa konto */
+$('vUp').addEventListener('submit',async e=>{
+  e.preventDefault();const f=e.target,email=$('upEmail').value.trim(),pw=$('upPw').value;
+  if(!validEmail(email)) return fail(f,'eEmail');
+  if(pw.length<8) return fail(f,'eShort');
+  f.querySelector('button[type=submit]').disabled=true;
+  const {data,error}=await sb.auth.signUp({email,password:pw,options:{emailRedirectTo:HERE}});
+  if(error) return fail(f,errKey(error),error.message);
+  f.querySelector('button[type=submit]').disabled=false;
+  if(data.session){user=data.user;return unlock()}
+  message('checkMail',{e:email},true);
+});
+/* glömt lösenord */
+$('vForgot').addEventListener('submit',async e=>{
+  e.preventDefault();const f=e.target,email=$('fgEmail').value.trim();
+  if(!validEmail(email)) return fail(f,'eEmail');
+  f.querySelector('button[type=submit]').disabled=true;
+  const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:HERE});
+  if(error) return fail(f,errKey(error),error.message);
+  f.querySelector('button[type=submit]').disabled=false;
+  message('resetSent',{e:email},true);
+});
+/* nytt lösenord */
+$('vReset').addEventListener('submit',async e=>{
+  e.preventDefault();const f=e.target,pw=$('rsPw').value;
+  if(pw.length<8) return fail(f,'eShort');
+  f.querySelector('button[type=submit]').disabled=true;
+  const {data,error}=await sb.auth.updateUser({password:pw});
+  if(error) return fail(f,errKey(error),error.message);
+  recovery=false;user=data.user;unlock();
+});
+
+/* ---------- start ---------- */
+setLang(readSettings().lang||defaultLang());
+busy('busy');
+(async()=>{
+  const {data}=await sb.auth.getSession();
+  const session=data&&data.session;
+  if(location.hash) history.replaceState(null,'',location.pathname+location.search);
+  if(session){
+    user=session.user;
+    if(recovery){if(session.user&&session.user.email)$('rsEmail').value=session.user.email;return show('reset')}
+    return unlock();
+  }
+  forgetKeys();
+  if(linkError){message('eLink');$('msgBtn').textContent=tx('toIn');return}
+  show(new URLSearchParams(location.search).has('signup')?'up':'in');
+})();
 })();
 </script>
 </body>
