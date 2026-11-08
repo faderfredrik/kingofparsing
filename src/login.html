@@ -119,6 +119,9 @@ const SUPABASE_URL='https://ggknhdxvtijbhozdfhjl.supabase.co';
 const SUPABASE_KEY='sb_publishable_l9K8CdvHYwboYr2Ekr77sw_Qnh2JBaQ'; // offentlig nyckel, skyddas av databasens regler
 const P=JSON.parse(document.getElementById('payload').textContent);
 const KEY='kop-key-'+P.id;
+/* Demokontot: delas med en länk /login/#demo=<lösenord>. Lösenordet finns bara i länken, aldrig i repot.
+   Appen sparar inget för det här kontot, och databasen spärrar det (supabase/schema.sql, is_demo). */
+const DEMO_EMAIL='demo@kingofparsing.com';
 const HERE=location.origin+location.pathname;
 
 /* ---------- språk: samma inställning som appen (kop-settings.lang) ---------- */
@@ -136,7 +139,8 @@ const T={
     eExists:'Det finns redan ett konto med den e-postadressen. Logga in i stället.',eWeak:'Lösenordet är för svagt. Välj ett längre eller mindre vanligt lösenord.',
     eRate:'För många försök just nu. Vänta en stund och försök igen.',eSame:'Det nya lösenordet måste skilja sig från det gamla.',
     eLink:'Länken har gått ut eller redan använts. Be om en ny.',eNet:'Det gick inte att nå servern. Kontrollera internetanslutningen och försök igen.',
-    eKey:'Appen kunde inte öppnas just nu. Försök igen om en stund.',eOther:'Något gick fel: {m}',signOut:'Logga ut'
+    eKey:'Appen kunde inte öppnas just nu. Försök igen om en stund.',eOther:'Något gick fel: {m}',signOut:'Logga ut',
+    eDemo:'Demolänken fungerar inte längre. Be den som skickade den om en ny länk.'
   },
   en:{
     subIn:'Log in to open the app.',subUp:'Create an account to start parsing.',subForgot:'Enter your email and we’ll send you a link to choose a new password.',subReset:'Choose a new password.',subMsg:'',
@@ -151,7 +155,8 @@ const T={
     eExists:'There is already an account with that email. Log in instead.',eWeak:'The password is too weak. Choose a longer or less common one.',
     eRate:'Too many attempts right now. Wait a moment and try again.',eSame:'The new password must be different from the old one.',
     eLink:'The link has expired or has already been used. Ask for a new one.',eNet:'Could not reach the server. Check your connection and try again.',
-    eKey:'The app could not be opened right now. Please try again in a moment.',eOther:'Something went wrong: {m}',signOut:'Log out'
+    eKey:'The app could not be opened right now. Please try again in a moment.',eOther:'Something went wrong: {m}',signOut:'Log out',
+    eDemo:'The demo link no longer works. Ask the person who sent it for a new link.'
   }
 };
 let LANG='sv',VIEW='busy',MSG=null;
@@ -231,6 +236,7 @@ const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSe
 const hash=new URLSearchParams(location.hash.slice(1));
 let recovery=hash.get('type')==='recovery';
 const linkError=hash.get('error_code')||hash.get('error');
+const demoPw=hash.get('demo');
 sb.auth.onAuthStateChange(ev=>{if(ev==='PASSWORD_RECOVERY'&&VIEW!=='reset'){recovery=true;show('reset')}});
 
 let user=null,opening=false;
@@ -248,12 +254,14 @@ async function unlock(){
       forgetKeys();
       try{localStorage.setItem(KEY,toB64(await crypto.subtle.exportKey('raw',key)))}catch(e){}
     }
+    const demo=!!user&&user.email===DEMO_EMAIL;
     window.KOP={
       sb,
       uid:user&&user.id,
       email:user&&user.email,
-      save(row){return sb.from('answers').insert(row).then(r=>{if(r.error)console.warn('KOP: svaret sparades inte',r.error.message)},e=>console.warn('KOP: svaret sparades inte',e))},
-      async signOut(){forgetKeys();try{await sb.auth.signOut()}catch(e){}location.replace(HERE)}
+      demo,
+      save(row){if(demo) return Promise.resolve();return sb.from('answers').insert(row).then(r=>{if(r.error)console.warn('KOP: svaret sparades inte',r.error.message)},e=>console.warn('KOP: svaret sparades inte',e))},
+      async signOut(to){forgetKeys();try{await sb.auth.signOut()}catch(e){}location.replace(HERE+(to==='signup'?'?signup':''))}
     };
     document.open();document.write(html);document.close();
   }catch(x){
@@ -310,9 +318,22 @@ $('vReset').addEventListener('submit',async e=>{
 setLang(readSettings().lang||defaultLang());
 busy('busy');
 (async()=>{
+  if(location.hash) history.replaceState(null,'',location.pathname+location.search);
+  if(demoPw){
+    // demolänken: logga ut ett eventuellt annat konto, börja om från noll och logga in på demokontot
+    busy('unlocking');
+    try{await sb.auth.signOut({scope:'local'})}catch(e){}
+    forgetKeys();
+    try{const l=readSettings().lang;['kop-settings','kop-tour','kop-life'].forEach(k=>localStorage.removeItem(k));if(l)localStorage.setItem('kop-settings',JSON.stringify({lang:l}))}catch(e){}
+    const {data,error}=await sb.auth.signInWithPassword({email:DEMO_EMAIL,password:demoPw});
+    if(error||!data.user){
+      // fel lösenord ger eDemo; annars visas den verkliga orsaken (t.ex. obekräftat konto eller för många försök)
+      const k=errKey(error);console.warn('KOP: demoinloggningen misslyckades',error);
+      message(k==='eCreds'?'eDemo':k,{m:error?(error.code||'')+' '+error.message:'no user'});$('msgBtn').textContent=tx('toIn');return}
+    user=data.user;return unlock();
+  }
   const {data}=await sb.auth.getSession();
   const session=data&&data.session;
-  if(location.hash) history.replaceState(null,'',location.pathname+location.search);
   if(session){
     user=session.user;
     if(recovery){if(session.user&&session.user.email)$('rsEmail').value=session.user.email;return show('reset')}

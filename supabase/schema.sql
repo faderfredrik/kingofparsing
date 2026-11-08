@@ -13,6 +13,16 @@ drop policy if exists "Inloggade får läsa nyckeln" on public.app_secret;
 create policy "Inloggade får läsa nyckeln" on public.app_secret
   for select to authenticated using (true);
 
+-- 1b. Demokontot, som delas med en länk till den som vill prova appen utan eget konto.
+--     Det får läsa nyckeln men inte spara något (se reglerna nedan och i mina-sidor.sql).
+create or replace function public.is_demo()
+returns boolean
+language sql
+stable
+set search_path = ''
+as $$ select coalesce((auth.jwt() ->> 'email') = 'demo@kingofparsing.com', false) $$;
+grant execute on function public.is_demo() to authenticated;
+
 -- 2. Varje svar som en användare lämnar.
 create table if not exists public.answers (
   id bigint generated always as identity primary key,
@@ -35,7 +45,7 @@ create policy "Läsa egna svar" on public.answers
   for select to authenticated using (user_id = (select auth.uid()));
 drop policy if exists "Spara egna svar" on public.answers;
 create policy "Spara egna svar" on public.answers
-  for insert to authenticated with check (user_id = (select auth.uid()));
+  for insert to authenticated with check (user_id = (select auth.uid()) and not (select public.is_demo()));
 
 -- 3. Totalt antal parsade ord, till räknaren på startsidan. Visar bara en siffra.
 create or replace function public.total_parsed()

@@ -1,5 +1,6 @@
 -- King of Parsing: tillägg för Mina sidor (profil, Tyck till och kontoradering).
 -- Körs i Supabase → SQL Editor efter schema.sql. Innehåller inga hemligheter.
+-- Båda filerna går att köra om utan att något försvinner.
 
 -- 1. Profil: lärosäte, kurs och högsta uppnådda titel.
 create table if not exists public.profiles (
@@ -14,9 +15,9 @@ alter table public.profiles enable row level security;
 drop policy if exists "Läsa egen profil" on public.profiles;
 create policy "Läsa egen profil" on public.profiles for select to authenticated using (user_id = (select auth.uid()));
 drop policy if exists "Skapa egen profil" on public.profiles;
-create policy "Skapa egen profil" on public.profiles for insert to authenticated with check (user_id = (select auth.uid()));
+create policy "Skapa egen profil" on public.profiles for insert to authenticated with check (user_id = (select auth.uid()) and not (select public.is_demo()));
 drop policy if exists "Ändra egen profil" on public.profiles;
-create policy "Ändra egen profil" on public.profiles for update to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+create policy "Ändra egen profil" on public.profiles for update to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()) and not (select public.is_demo()));
 grant select, insert, update on public.profiles to authenticated;
 revoke all on public.profiles from anon;
 
@@ -32,7 +33,8 @@ create table if not exists public.feedback (
 );
 alter table public.feedback enable row level security;
 drop policy if exists "Läsa egna kommentarer" on public.feedback;
-create policy "Läsa egna kommentarer" on public.feedback for select to authenticated using (user_id = (select auth.uid()));
+-- Demokontot får skicka kommentarer men inte läsa dem, eftersom flera personer delar kontot.
+create policy "Läsa egna kommentarer" on public.feedback for select to authenticated using (user_id = (select auth.uid()) and not (select public.is_demo()));
 drop policy if exists "Skicka kommentar" on public.feedback;
 create policy "Skicka kommentar" on public.feedback for insert to authenticated with check (user_id = (select auth.uid()));
 grant select, insert on public.feedback to authenticated;
@@ -47,6 +49,7 @@ set search_path = ''
 as $$
 begin
   if auth.uid() is null then raise exception 'not signed in'; end if;
+  if public.is_demo() then raise exception 'the demo account cannot be deleted'; end if;
   delete from auth.users where id = auth.uid();
 end
 $$;

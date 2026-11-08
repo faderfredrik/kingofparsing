@@ -313,6 +313,7 @@ kbd{font-family:var(--ui);background:var(--surface);border-radius:6px;padding:2p
 .tour-card .tour-go{background:var(--hero);color:#fff}
 .tour-skip{background:none;border:0;color:var(--gold-ink);font-size:14px;text-decoration:underline;padding:6px 0}
 .tourlink{text-align:center;margin:4px 0 10px}
+.demonote{background:var(--gold-tint);color:var(--ink);border-radius:12px;padding:10px 14px;font-size:14.5px;margin:12px 0 0}
 .tourlink button{background:none;border:0;color:var(--muted);font-size:14px;text-decoration:underline}
 @media (prefers-reduced-motion:reduce){.tour-ring{transition:none}.tour-card{animation:none}}
 </style>
@@ -342,6 +343,7 @@ kbd{font-family:var(--ui);background:var(--surface);border-radius:6px;padding:2p
     <div class="intro">
       <h1 data-i="h1"></h1>
       <p data-i="intro"></p>
+      <p class="demonote" id="demoNote" data-i="demoIntro" hidden></p>
     </div>
     <section class="block">
       <h2 data-i="modeH"></h2>
@@ -612,6 +614,15 @@ Object.assign(T.en,{
   kingQuiz:(i,n)=>`King’s test ${i} of ${n}`,kingWinH:'You are King of Parsing!',kingFailH:n=>`The King’s test ended after ${n} correct in a row.`,
   kingFailSub:'One mistake and the test starts over. Try again whenever you like.',kingAgain:'Try again',toMe:'Go to My page'
 });
+/* demokontot */
+Object.assign(T.sv,{
+  demoH:'Demokonto',demoText:'Du provar King of Parsing med ett demokonto. Dina svar och nivåer räknas bara under besöket och sparas inte. Vill du behålla dina framsteg kan du skapa ett eget konto.',
+  demoUp:'Skapa ett eget konto',demoIntro:'Du provar appen med ett demokonto. Ingenting sparas, så nästa gång börjar allt från början.'
+});
+Object.assign(T.en,{
+  demoH:'Demo account',demoText:'You are trying King of Parsing with a demo account. Your answers and levels only count during this visit and are not saved. If you want to keep your progress, you can create your own account.',
+  demoUp:'Create your own account',demoIntro:'You are trying the app with a demo account. Nothing is saved, so everything starts over next time.'
+});
 /* guiden för startsidan och övningen */
 Object.assign(T.sv,{
   tourOf:(i,n)=>`${i} av ${n}`,tourNext:'Fortsätt',tourDone:'Sätt igång',tourSkip:'Hoppa över guiden',tourAgain:'Visa guiden igen',tourAria:'Guide',
@@ -812,7 +823,7 @@ const firstCh=ks=>{const c=ks.map(momCh).filter(x=>x!=null);return c.length?Math
 /* ---------- settings ---------- */
 let S={types:'NV',chapters:[],len:20,level:0,book:'mounce',by:{},mode:'free',secs:[0],vocab:300};
 /* sparade inställningar utan läge kommer från tiden före det fria läget: behåll bokläget */
-try{const s=JSON.parse(localStorage.getItem('kop-settings')||'null');if(s&&Array.isArray(s.chapters)){S=Object.assign(S,s);if(!s.mode)S.mode='book'}}catch(e){}
+try{const s=JSON.parse(localStorage.getItem('kop-settings')||'null');if(s&&Array.isArray(s.chapters)){S=Object.assign(S,s);if(!s.mode)S.mode='book'}else if(s&&s.lang)S.lang=s.lang}catch(e){}
 if(S.mode!=='book') S.mode='free';
 if(!Array.isArray(S.secs)) S.secs=[0];
 S.secs=S.secs.filter(i=>Number.isInteger(i)&&i>=0&&i<SECTIONS.length);
@@ -1405,6 +1416,8 @@ function renderSummary(){
 
 /* ---------- konto: historik, nivåtitlar, svagheter och Mina sidor ---------- */
 const ACC=!!(window.KOP&&window.KOP.sb);
+/* demokontot: svaren räknas bara under besöket, inget sparas i databasen */
+const DEMO=ACC&&!!window.KOP.demo;
 let HIST=[],histReady=false;
 let PROF={school:'',course:'',title:0,king_at:null};
 const FKEY={};F.forEach(f=>{FKEY[f.f+'|'+W[f.w].h]=f});
@@ -1437,7 +1450,7 @@ function titleProgress(){
 }
 function saveProfile(fields){
   Object.assign(PROF,fields);
-  if(!ACC) return Promise.resolve({});
+  if(!ACC||DEMO) return Promise.resolve({});
   return KOP.sb.from('profiles').upsert(Object.assign({user_id:KOP.uid,updated_at:new Date().toISOString()},fields)).then(r=>{if(r.error)console.warn('KOP: profilen sparades inte',r.error.message);return r});
 }
 function syncTitle(popup){
@@ -1452,7 +1465,7 @@ function syncTitle(popup){
 async function loadAccount(){
   if(!ACC) return;
   const sb=KOP.sb;
-  try{
+  if(!DEMO) try{
     const {data:p}=await sb.from('profiles').select('school,course,title,king_at').eq('user_id',KOP.uid).maybeSingle();
     if(p) Object.assign(PROF,p);
     const rows=[];
@@ -1472,7 +1485,7 @@ async function loadAccount(){
 function recordAnswer(row){
   if(!ACC) return;
   HIST.push(Object.assign({created_at:new Date().toISOString()},row));
-  KOP.save(row);
+  if(!DEMO) KOP.save(row);
 }
 
 /* ord som räknas som inlärda: de två senaste svaren rätt och det senaste utan ledtråd */
@@ -1633,8 +1646,8 @@ function renderMe(){
     var MISSES=misses.map(m=>m.f);
   }
   h+=`</section>`;
-  // kurs
-  h+=`<section class="block"><h2>${tx('courseH')}</h2><p class="sub">${tx('courseSub')}</p>
+  // kurs (inte för demokontot)
+  if(!DEMO) h+=`<section class="block"><h2>${tx('courseH')}</h2><p class="sub">${tx('courseSub')}</p>
     <label class="flabel" for="pSchool">${tx('school')}</label><input class="finput" id="pSchool" maxlength="120" value="${esc(PROF.school||'')}">
     <label class="flabel" for="pCourse">${tx('course')}</label><input class="finput" id="pCourse" maxlength="120" value="${esc(PROF.course||'')}">
     <div class="btnrow"><button class="ghost" id="pSave">${tx('saveBtn')}</button><span class="me-ok" id="pOk"></span></div></section>`;
@@ -1644,8 +1657,10 @@ function renderMe(){
     <label class="flabel" for="fbName">${tx('fbName')}</label><input class="finput" id="fbName" maxlength="60">
     <label class="fcheck"><input type="checkbox" id="fbQuote"> <span>${tx('fbQuote')}</span></label>
     <div class="btnrow"><button class="ghost" id="fbSend">${tx('fbSend')}</button><span class="me-ok" id="fbOk"></span></div></section>`;
-  // konto
-  h+=`<section class="block"><h2>${tx('accH')}</h2><p class="sub">${tx('loggedAs',esc(KOP.email||''))}</p>
+  // konto; demokontot får i stället en uppmaning att skapa ett eget konto
+  if(DEMO) h+=`<section class="block"><h2>${tx('demoH')}</h2><p class="sub">${tx('demoText')}</p>
+    <div class="btnrow"><button class="primary" id="demoUp">${tx('demoUp')}</button><button class="ghost" id="aOut">${tx('logout')}</button></div></section>`;
+  else h+=`<section class="block"><h2>${tx('accH')}</h2><p class="sub">${tx('loggedAs',esc(KOP.email||''))}</p>
     <input type="email" autocomplete="username" value="${esc(KOP.email||'')}" hidden>
     <label class="flabel" for="aPw">${tx('newPwL')}</label><input class="finput" id="aPw" type="password" autocomplete="new-password" minlength="8">
     <div class="btnrow"><button class="ghost" id="aPwBtn">${tx('changePw')}</button><span class="me-ok" id="aPwOk"></span></div>
@@ -1658,7 +1673,8 @@ function renderMe(){
   if($('kingBtn')) $('kingBtn').onclick=()=>startSession(null,{king:true});
   if($('weakBtn')) $('weakBtn').onclick=()=>start(weakForms(),'weakNote');
   if($('missBtn')) $('missBtn').onclick=()=>startSession(shuffle(MISSES));
-  $('pSave').onclick=async()=>{const r=await saveProfile({school:$('pSchool').value.trim(),course:$('pCourse').value.trim()});$('pOk').textContent=r.error?tx('errMsg',r.error.message):tx('saved')};
+  if($('demoUp')) $('demoUp').onclick=()=>KOP.signOut('signup');
+  if($('pSave')) $('pSave').onclick=async()=>{const r=await saveProfile({school:$('pSchool').value.trim(),course:$('pCourse').value.trim()});$('pOk').textContent=r.error?tx('errMsg',r.error.message):tx('saved')};
   $('fbText').oninput=()=>{$('fbCount').textContent=$('fbText').value.length+'/200'};
   $('fbSend').onclick=async()=>{
     const text=$('fbText').value.trim();if(!text) return $('fbText').focus();
@@ -1668,13 +1684,13 @@ function renderMe(){
     if(error){$('fbOk').textContent=tx('errMsg',error.message);return}
     $('fbText').value='';$('fbCount').textContent='0/200';$('fbOk').textContent=tx('fbThanks');
   };
-  $('aPwBtn').onclick=async()=>{
+  if($('aPwBtn')) $('aPwBtn').onclick=async()=>{
     const pw=$('aPw').value;if(pw.length<8){$('aPwOk').textContent=tx('pwShort');return}
     const {error}=await KOP.sb.auth.updateUser({password:pw});
     $('aPwOk').textContent=error?tx('errMsg',error.message):tx('pwChanged');if(!error)$('aPw').value='';
   };
   $('aOut').onclick=()=>KOP.signOut();
-  $('aDel').onclick=async()=>{
+  if($('aDel')) $('aDel').onclick=async()=>{
     if(!confirm(tx('deleteConfirm'))) return;
     const {error}=await KOP.sb.rpc('delete_my_account');
     if(error){$('aErr').textContent=tx('errMsg',error.message);return}
@@ -1820,6 +1836,7 @@ document.addEventListener('keydown',e=>{
     if(q.checked) nextQuestion(); else check();
   }
 });
+$('demoNote').hidden=!DEMO;
 renderSetup();
 loadAccount();
 })();
