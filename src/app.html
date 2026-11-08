@@ -294,6 +294,27 @@ kbd{font-family:var(--ui);background:var(--surface);border-radius:6px;padding:2p
 .mcard p{margin:0 0 20px;font-size:15.5px}
 .mcard .primary{width:100%}
 @media (max-width:720px){.frow{grid-template-columns:minmax(90px,130px) 1fr 44px}}
+/* guiden: en guldram runt det som visas och ett kort med Fortsätt */
+.tour-ring{position:fixed;z-index:60;border:3px solid var(--gold);border-radius:18px;pointer-events:none;transition:top .2s,left .2s,width .2s,height .2s}
+.tour-card{position:fixed;z-index:61;background:var(--gold);color:var(--gold-ink);border-radius:18px;padding:16px 18px 14px;width:min(390px,calc(100vw - 32px));animation:fade .25s both}
+.tour-card .tk{margin:0;font-size:12.5px;font-weight:700;opacity:.7}
+.tour-card h3{font-size:17px;margin:4px 0 6px}
+.tour-card p.tt{margin:0 0 14px;font-size:14.5px;line-height:1.45}
+.tour-card .tprev{margin:0 0 14px;background:var(--hero);color:var(--hero-ink);border-radius:12px;padding:8px 8px 10px;overflow:hidden}
+.tour-card .tprev .bd{margin:2px auto 0}
+.tour-card .tprev .segs{flex-wrap:nowrap;gap:3px}
+.tour-card .tprev .mseg{min-width:0;flex:none}
+.tour-card .tprev .mseg .mo{font-size:24px;padding:2px 3px 0}
+.tour-card .tprev .mseg .lab{font-size:10.5px;padding-bottom:6px}
+.tour-card .tprev .mseg .br{height:7px}
+.tour-card .tprev .plus{font-size:15px;padding-bottom:7px}
+.tour-card .tbtn{text-decoration:underline;text-decoration-color:var(--lapis);text-decoration-thickness:2px;text-underline-offset:3px;font-weight:700}
+.tour-row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.tour-card .tour-go{background:var(--hero);color:#fff}
+.tour-skip{background:none;border:0;color:var(--gold-ink);font-size:14px;text-decoration:underline;padding:6px 0}
+.tourlink{text-align:center;margin:4px 0 10px}
+.tourlink button{background:none;border:0;color:var(--muted);font-size:14px;text-decoration:underline}
+@media (prefers-reduced-motion:reduce){.tour-ring{transition:none}.tour-card{animation:none}}
 </style>
 </head>
 <body>
@@ -372,6 +393,7 @@ kbd{font-family:var(--ui);background:var(--surface);border-radius:6px;padding:2p
         <div class="note hidden" id="poolNote"></div>
       </div>
     </section>
+    <p class="tourlink"><button id="tourAgain" data-i="tourAgain"></button></p>
     <p class="credits" data-i="credits"></p>
   </main>
 
@@ -589,6 +611,45 @@ Object.assign(T.en,{
   kingText:'50 forms in a row without a single mistake. You are King of Parsing!',cont:'Continue',chFill:(k,n)=>`${k} of ${n} words learned`,
   kingQuiz:(i,n)=>`King’s test ${i} of ${n}`,kingWinH:'You are King of Parsing!',kingFailH:n=>`The King’s test ended after ${n} correct in a row.`,
   kingFailSub:'One mistake and the test starts over. Try again whenever you like.',kingAgain:'Try again',toMe:'Go to My page'
+});
+/* guiden för startsidan och övningen */
+Object.assign(T.sv,{
+  tourOf:(i,n)=>`${i} av ${n}`,tourNext:'Fortsätt',tourDone:'Sätt igång',tourSkip:'Hoppa över guiden',tourAgain:'Visa guiden igen',tourAria:'Guide',
+  tMode:'Välj hur du vill träna',tModeT:(f,b)=>`${f} följer appens egen ordning, från substantiv till particip och modus. ${b} följer kapitlen i Basics of Biblical Greek. Du kan byta när du vill, och dina framsteg följer med.`,
+  tSec:'Välj sektioner',tSecT:'Varje ruta är ett grammatiskt moment. Välj en eller flera. Svarsalternativen omfattar också allt i sektionerna före.',tSecAcc:' Rutorna fylls med grönt när du behärskar dem, och den guldmarkerade rutan tar dig till nästa nivå.',
+  tVoc:'Välj ordförråd',tVocT:'Börja med de vanligaste orden i Nya testamentet och utöka när du vill.',
+  tLvl:'Hur långt har du kommit?',tLvlT:'Välj kapitlet du har kommit till i boken. Det bestämmer vilken grammatik du får parsa.',
+  tCh:'Välj glosor',tChT:'Välj vilka kapitels glosor du vill öva på.',tChAcc:' Rutorna fylls med grönt i takt med att du lär dig orden.',
+  tLen:'Omgångens längd',tLenT:'Välj hur många former en omgång har, eller Fri övning som pågår tills du avslutar.',
+  tTitle:'Din nivå',tTitleT:'Här ser du din nivå. Varje sektion du behärskar ger en ny titel, från Bonde till King of Parsing. Under Mina sidor finns din statistik och det du behöver öva mer på.',
+  tStart:'Sätt igång',tStartT:'Tryck på Starta övning när du är redo. Första gången visar vi hur övningen fungerar.',
+  tForm:'Formen',tFormT:'Det här är en form ur Nya testamentet, precis som den står i texten. Din uppgift är att parsa den.',
+  tFields:'Parsa i rutorna',tFieldsT:'Välj ett alternativ i varje ruta: tempus, diates, modus, person och numerus för verb, eller kasus, numerus och genus för substantiv. Bara det du har gått igenom finns med.',
+  tLex:'Grundform',tLexT:'Välj också vilket ord formen kommer från. Både parsningen och grundformen ska vara rätt.',
+  tSplit:'Fastnar du? Dela upp ordet',tSplitT:'Tryck på Dela upp ordet, så delas formen upp i sina delar. Så här ser det ut för formen ovan:',tSplitNo:'Tryck på Dela upp ordet, så delas formen upp i sina delar. Alla former går inte att dela upp ännu, och då syns inte knappen.',
+  tLabels:'Visa etiketter',tLabelsT:'Tryck en gång till, så får varje del en etikett, till exempel augment, stam, tempusform och ändelse:',tLabelsNo:'Tryck en gång till, så får varje del en etikett, till exempel augment, stam, tempusform och ändelse.',
+  tHintNote:'Ett svar där du har använt ledtråd räknas inte mot nästa nivå.',
+  tGo:'Nu är det dags att börja parsa!',tGoT:'Välj korrekt form med knapparna nedan och kontrollera sedan svaret. Lycka till!',
+  tLevelKick:n=>`Ny nivå: ${n}`,tLevel:'Grattis!',tLevelT:'Du har nått din första nivå och är på god väg mot att bli King of Parsing! Se dina framsteg och planera dina studier på Mina sidor. Den knappen hittar du i toppmenyn.'
+});
+Object.assign(T.en,{
+  tourOf:(i,n)=>`${i} of ${n}`,tourNext:'Continue',tourDone:'Let’s go',tourSkip:'Skip the guide',tourAgain:'Show the guide again',tourAria:'Guide',
+  tMode:'Choose how to practise',tModeT:(f,b)=>`${f} follows the app’s own sequence, from nouns to participles and moods. ${b} follows the chapters of Basics of Biblical Greek. You can switch whenever you like, and your progress comes with you.`,
+  tSec:'Choose sections',tSecT:'Each box is a grammatical topic. Choose one or more. The answer options also cover everything in the earlier sections.',tSecAcc:' The boxes fill with green as you master them, and the gold box takes you to the next level.',
+  tVoc:'Choose vocabulary',tVocT:'Start with the most common words in the New Testament and add more whenever you like.',
+  tLvl:'How far have you got?',tLvlT:'Choose the chapter you have reached in the book. It determines which grammar you will parse.',
+  tCh:'Choose vocabulary',tChT:'Choose which chapters’ vocabulary you want to practise.',tChAcc:' The boxes fill with green as you learn the words.',
+  tLen:'Session length',tLenT:'Choose how many forms a session has, or Free practice, which continues until you end it.',
+  tTitle:'Your level',tTitleT:'This is your level. Each section you master gives you a new title, from Farmer to King of Parsing. My page has your statistics and what you need to practise more.',
+  tStart:'Get started',tStartT:'Press Start practice when you are ready. The first time, we will show you how practice works.',
+  tForm:'The form',tFormT:'This is a form from the New Testament, exactly as it appears in the text. Your task is to parse it.',
+  tFields:'Parse in the boxes',tFieldsT:'Choose an option in each box: tense, voice, mood, person and number for verbs, or case, number and gender for nouns. Only what you have covered is included.',
+  tLex:'Lexical form',tLexT:'Also choose which word the form comes from. Both the parsing and the lexical form need to be right.',
+  tSplit:'Stuck? Split the word',tSplitT:'Press Split the word and the form is divided into its parts. This is how it looks for the form above:',tSplitNo:'Press Split the word and the form is divided into its parts. Not every form can be split yet, and then the button is not shown.',
+  tLabels:'Show labels',tLabelsT:'Press once more and each part gets a label, such as augment, stem, tense formative and ending:',tLabelsNo:'Press once more and each part gets a label, such as augment, stem, tense formative and ending.',
+  tHintNote:'An answer where you used a hint does not count towards the next level.',
+  tGo:'Now it’s time to start parsing!',tGoT:'Choose the correct form with the buttons below and then check your answer. Good luck!',
+  tLevelKick:n=>`New level: ${n}`,tLevel:'Congratulations!',tLevelT:'You have reached your first level and are well on your way to becoming King of Parsing! See your progress and plan your studies on My page. You will find that button in the top menu.'
 });
 /* fritt läge: sektioner i appens egen ordning */
 Object.assign(T.sv,{
@@ -855,6 +916,7 @@ function renderFreeSetup(){
   $('poolNote').classList.add('hidden');
   setTop('setup');
   setActions([{label:tx('start'),primary:true,disabled:!pool.length,fn:()=>startSession()}],'');
+  if(!TOUR) setTimeout(setupTour,250);
 }
 function renderSetup(){
   const free=FREE();
@@ -918,6 +980,7 @@ function renderSetup(){
   note.textContent=msg;note.classList.toggle('hidden',!msg);
   setTop('setup');
   setActions([{label:tx('start'),primary:true,disabled:!pool.length,fn:()=>startSession()}],'');
+  if(!TOUR) setTimeout(setupTour,250);
 }
 document.querySelectorAll('#typeSeg button').forEach(b=>b.onclick=()=>{S.types=b.dataset.t;save();renderSetup()});
 document.querySelectorAll('#vocSeg button').forEach(b=>b.onclick=()=>{S.vocab=+b.dataset.v;save();renderSetup()});
@@ -1002,13 +1065,21 @@ function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Ma
 
 function nextQuestion(){
   if(sess.total&&sess.i>=sess.total){return renderSummary()}
-  const f=pickForm(),word=W[f.w];
+  let f=pickForm();
+  // första gången: välj helst en form med många delar, så att guiden kan visa uppdelningen
+  if(sess.i===0&&!sess.king&&!sess.retry&&!tourSeen('quiz')){
+    const parts=x=>{const m=FA[x.i],w=W[x.w];const c=m&&x.codes.find(c=>m[c]!==undefined&&learned(w.t,c,sess.M));return c?AN[m[c]][0].length:0};
+    let best=parts(f);
+    for(let k=0;k<60&&best<4;k++){const g=pickForm(),n=parts(g);if(n>best){best=n;f=g}}
+  }
+  const word=W[f.w];
   const acc=f.codes.filter(c=>learned(word.t,c,sess.M));
   q={f,word,acc:acc.length?acc:f.codes,sel:{},checked:false,hint:0,lex:distractors(word),opts:availOpts(word.t,sess.M)};
   // preselect single-option fields
   ['tense','voice','mood','case'].forEach(k=>{if(q.opts[k]&&q.opts[k].length===1&&fieldsFor().includes(k))q.sel[k]=q.opts[k]});
   sess.i++;
   renderQuiz();
+  if(sess.i===1&&!sess.king) setTimeout(quizTour,250);
 }
 function fieldsFor(moodOverride){
   if(q.word.t==='N') return ['case','number','gender','lex'];
@@ -1375,7 +1446,7 @@ function syncTitle(popup){
   if(t>(+PROF.title||0)){
     const old=+PROF.title||0;
     saveProfile({title:t});
-    if(popup) titlePopup(t,old);
+    if(popup){if(old===0&&!tourSeen('level')) LEVEL_TOUR=t;else titlePopup(t,old)}
   }
 }
 async function loadAccount(){
@@ -1622,8 +1693,104 @@ function renderKingSummary(){
   setActions(won?[{label:tx('toMe'),primary:true,fn:renderMe}]:[{label:tx('kingAgain'),primary:true,fn:()=>startSession(null,{king:true})},{label:tx('toMe'),fn:renderMe}],'');
 }
 
+/* ---------- guide ----------
+   Ett kort med Fortsätt som går igenom en vy steg för steg. Visad guide sparas i kop-tour. */
+let TOUR=null,TOUR_MEM={};
+function tourSeen(k){if(TOUR_MEM[k])return true;try{return !!(JSON.parse(localStorage.getItem('kop-tour')||'{}')||{})[k]}catch(e){return false}}
+function tourMark(k){TOUR_MEM[k]=true;try{const o=JSON.parse(localStorage.getItem('kop-tour')||'{}')||{};o[k]=1;localStorage.setItem('kop-tour',JSON.stringify(o))}catch(e){}}
+function tourReset(){TOUR_MEM={};try{localStorage.removeItem('kop-tour')}catch(e){}}
+const isShown=el=>!!el&&el.getClientRects().length>0;
+function startTour(key,view,steps,opt){
+  if(TOUR||tourSeen(key)||!$('modal').classList.contains('hidden')) return false;
+  steps=steps.filter(st=>isShown(st.el()));
+  if(!steps.length) return false;
+  const ring=document.createElement('div');ring.className='tour-ring';
+  const card=document.createElement('div');card.className='tour-card';card.setAttribute('role','dialog');card.setAttribute('aria-label',tx('tourAria'));card.setAttribute('aria-live','polite');
+  document.body.append(ring,card);
+  TOUR={key,view,steps,i:-1,ring,card,done:(opt&&opt.done)||tx('tourDone'),pos:()=>requestAnimationFrame(tourPlace)};
+  addEventListener('scroll',TOUR.pos,{passive:true});addEventListener('resize',TOUR.pos);
+  tourNext();
+  return true;
+}
+function tourNext(){
+  if(!TOUR) return;
+  TOUR.i++;
+  if(TOUR.i>=TOUR.steps.length) return endTour();
+  const st=TOUR.steps[TOUR.i],n=TOUR.steps.length,last=TOUR.i===n-1,el=st.el();
+  if(!isShown(el)) return tourNext();
+  TOUR.card.innerHTML=`<p class="tk">${st.kick?esc(st.kick):tx('tourOf',TOUR.i+1,n)}</p><h3>${esc(st.title)}</h3><p class="tt">${st.html||esc(st.text)}</p>${st.prev?`<div class="tprev">${st.prev}</div>`:''}${st.note?`<p class="tt">${esc(st.note)}</p>`:''}
+    <div class="tour-row"><button class="tour-skip">${tx('tourSkip')}</button><button class="primary tour-go">${last?TOUR.done:tx('tourNext')}</button></div>`;
+  TOUR.card.querySelector('.tour-skip').hidden=last;
+  const pv=TOUR.card.querySelector('.tprev'),sg=pv&&pv.querySelector('.segs');
+  if(sg&&sg.scrollWidth>pv.clientWidth-16) sg.style.zoom=((pv.clientWidth-16)/sg.scrollWidth).toFixed(3);
+  TOUR.card.querySelector('.tour-go').onclick=tourNext;
+  TOUR.card.querySelector('.tour-skip').onclick=()=>endTour();
+  const r=el.getBoundingClientRect(),beh=matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth';
+  // kort som ska ligga ovanför: rulla så att målet börjar precis under kortet
+  if(st.above) window.scrollBy({top:r.top-(16+TOUR.card.offsetHeight+18),behavior:beh});
+  else if(r.top<8||r.bottom>innerHeight-180) el.scrollIntoView({block:r.height>innerHeight*.5?'start':'center',behavior:beh});
+  tourPlace();
+  TOUR.card.querySelector('.tour-go').focus({preventScroll:true});
+}
+function tourPlace(){
+  if(!TOUR||TOUR.i<0) return;
+  const el=TOUR.steps[TOUR.i].el();if(!isShown(el)) return;
+  const r=el.getBoundingClientRect(),c=TOUR.card,g=6,m=16;
+  Object.assign(TOUR.ring.style,{top:r.top-g+'px',left:r.left-g+'px',width:r.width+2*g+'px',height:r.height+2*g+'px'});
+  const ab=$('actionbar').getBoundingClientRect(),floor=Math.min(innerHeight,ab.top)-m;
+  const cw=c.offsetWidth,ch=c.offsetHeight;
+  const below=r.bottom+g+12+ch<=floor,above=r.top-g-12-ch>=m;
+  let y;
+  if(TOUR.steps[TOUR.i].above) y=r.top-g-12-ch;
+  else if(below) y=r.bottom+g+12;
+  else if(above) y=r.top-g-12-ch;
+  else y=floor-ch;
+  const x=Math.max(m,Math.min(innerWidth-cw-m,r.left));
+  c.style.top=Math.max(m,y)+'px';c.style.left=x+'px';
+}
+function endTour(){
+  if(!TOUR) return;
+  tourMark(TOUR.key);
+  removeEventListener('scroll',TOUR.pos);removeEventListener('resize',TOUR.pos);
+  TOUR.ring.remove();TOUR.card.remove();TOUR=null;
+}
+const blockOf=id=>()=>{const e=$(id);return e&&e.closest('.block')};
+function setupTour(){
+  const acc=ACC&&histReady;
+  startTour('setup','setup',[
+    {el:blockOf('modeSeg'),title:tx('tMode'),html:tx('tModeT',`<u class="tbtn">${esc(tx('modeFree'))}</u>`,`<u class="tbtn">${esc(tx('modeBook',(BOOKLIST.find(b=>b.id==='mounce')||B).name))}</u>`)},
+    {el:()=>FREE()?$('secBlock'):null,title:tx('tSec'),text:tx('tSecT')+(acc?tx('tSecAcc'):'')},
+    {el:()=>FREE()?$('vocBlock'):null,title:tx('tVoc'),text:tx('tVocT')},
+    {el:()=>FREE()?null:$('lvlExt'),title:tx('tLvl'),text:tx('tLvlT')},
+    {el:()=>FREE()?null:$('chBlock'),title:tx('tCh'),text:tx('tChT')+(acc?tx('tChAcc'):'')},
+    {el:blockOf('lenSeg'),title:tx('tLen'),text:tx('tLenT')},
+    {el:()=>ACC?$('topMeta').querySelector('.tpill'):null,title:tx('tTitle'),text:tx('tTitleT')},
+    {el:()=>$('actBtns'),title:tx('tStart'),text:tx('tStartT')}
+  ]);
+}
+function quizTour(){
+  const hk=hintCode(),hb=()=>isShown($('hintBtn'))?$('hintBtn'):$('qForm');
+  startTour('quiz','quiz',[
+    {el:()=>$('qForm'),title:tx('tForm'),text:tx('tFormT')},
+    {el:()=>$('fields'),title:tx('tFields'),text:tx('tFieldsT')},
+    {el:()=>{const o=$('fields').querySelector('.opts.lex');return o&&o.closest('.field')},title:tx('tLex'),text:tx('tLexT')},
+    {el:hb,title:tx('tSplit'),text:tx(hk?'tSplitT':'tSplitNo'),prev:hk?breakdownHTML(hk,'split'):''},
+    {el:hb,title:tx('tLabels'),text:tx(hk?'tLabelsT':'tLabelsNo'),prev:hk?breakdownHTML(hk,'labels'):'',note:tx('tHintNote')},
+    {el:()=>$('fields'),title:tx('tGo'),text:tx('tGoT'),above:true}
+  ]);
+}
+/* första nya nivån: ett guidekort som pekar på Mina sidor, i stället för den vanliga popupen.
+   Visas när knappen syns, alltså efter omgången och inte mitt i övningen. */
+let LEVEL_TOUR=0;
+function levelTour(view){
+  if(!LEVEL_TOUR||TOUR) return;
+  const t=LEVEL_TOUR;
+  if(startTour('level',view,[{el:()=>$('meBtn'),kick:tx('tLevelKick',titleName(t)),title:tx('tLevel'),text:tx('tLevelT')}],{done:tx('tourNext')})) LEVEL_TOUR=0;
+}
+$('tourAgain').onclick=()=>{endTour();tourReset();window.scrollTo(0,0);setupTour()};
+
 /* ---------- chrome ---------- */
-function show(id){['setup','quiz','summary','me'].forEach(x=>$(x).classList.toggle('hidden',x!==id));window.scrollTo(0,0)}
+function show(id){if(TOUR&&TOUR.view!==id)endTour();['setup','quiz','summary','me'].forEach(x=>$(x).classList.toggle('hidden',x!==id));window.scrollTo(0,0)}
 function setTop(view){
   const m=$('topMeta');
   if(view==='quiz'){
@@ -1633,6 +1800,7 @@ function setTop(view){
     const {t,p}=titleProgress();
     m.innerHTML=`<span class="pill tpill" title="${esc(tx('yourLevel'))}"><span>${esc(titleName(t))}</span>${t<KING?`<span class="tbar" role="img" aria-label="${esc(tx('levelProgress',p))}"><i style="width:${p}%"></i></span>`:''}</span><button class="pill mebtn" id="meBtn"${view==='me'?' aria-current="page"':''}>${tx('myPage')}</button>`;
     $('meBtn').onclick=()=>renderMe();
+    if(LEVEL_TOUR&&view!=='me') setTimeout(()=>levelTour(view),300);
   } else m.innerHTML=life.a?`<span class="pill">${tx('topTotal',life.c,life.a)}</span>`:'';
 }
 let actFns=[];
@@ -1644,6 +1812,7 @@ function setActions(list,hint){
 $('hintBtn').onclick=e=>{q.hint=Math.min(q.hint+1,2);renderQuiz();e.currentTarget.blur()};
 $('homeBtn').onclick=()=>{show('setup');renderSetup()};
 document.addEventListener('keydown',e=>{
+  if(TOUR){if(e.key==='Enter'){e.preventDefault();tourNext()}else if(e.key==='Escape'){e.preventDefault();endTour()}return}
   if(!$('modal').classList.contains('hidden')){if(e.key==='Enter'||e.key==='Escape'){e.preventDefault();closeModal()}return}
   if(e.key!=='Enter'||e.metaKey||e.ctrlKey) return;
   if(!$('quiz').classList.contains('hidden')){
