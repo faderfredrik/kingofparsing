@@ -97,14 +97,22 @@ button.pill:hover{background:var(--surface-2)}
 .ch[aria-pressed="true"] .c{color:rgba(255,255,255,.8)}
 .ch:disabled{opacity:.4;cursor:default}
 .ch.wide{grid-column:span 2}
+.secgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.secgrid .ch{align-items:flex-start;text-align:left;padding:10px 12px 9px;gap:3px;min-height:76px}
+.secgrid .ch .k{font-size:12px;font-weight:700;color:var(--muted)}
+.secgrid .ch .s{font-size:15px;font-weight:700;line-height:1.25}
+.secgrid .ch .w{font-size:13px;font-weight:600;margin-top:auto}
+.secgrid .ch .w+.c{font-size:11px;margin-top:-2px}
+.secgrid .ch[aria-pressed="true"] .k{color:rgba(255,255,255,.8)}
 .ch.lvl{box-shadow:inset 0 0 0 3px var(--gold)}
 .ch .lv{font-size:11px;font-weight:700;color:var(--gold)}
 .ch[aria-pressed="true"] .lv{color:var(--gold)}
 .selwrap{position:relative;display:inline-block;max-width:100%}
 .selwrap::after{content:"";position:absolute;right:16px;top:50%;width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:translateY(-70%) rotate(45deg);pointer-events:none}
 .sel{font:inherit;font-weight:600;font-size:15px;background:var(--surface-2);color:var(--ink);border:0;border-radius:12px;padding:12px 44px 12px 14px;max-width:100%;appearance:none;-webkit-appearance:none;cursor:pointer}
-.sel.manual{box-shadow:inset 0 0 0 3px var(--gold)}
-.lvlnote{font-size:14px;color:var(--muted);margin:10px 0 0}
+.modeext{margin-top:18px}
+.modeext h3{font-size:15px;font-weight:700;margin:0 0 4px}
+.modeext .sub{margin-bottom:12px}
 .status{display:flex;gap:16px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
 .status p{margin:0;max-width:60ch}
 .status .big{font-size:18px;font-weight:700}
@@ -314,25 +322,37 @@ kbd{font-family:var(--ui);background:var(--surface);border-radius:6px;padding:2p
       <h1 data-i="h1"></h1>
       <p data-i="intro"></p>
     </div>
-    <section class="block" id="bookBlock">
-      <h2 data-i="book"></h2>
-      <p class="sub" id="bookSub"></p>
-      <div class="seg" id="bookSeg" role="group" data-ia="book"></div>
-    </section>
     <section class="block">
+      <h2 data-i="modeH"></h2>
+      <p class="sub" id="modeSub"></p>
+      <div class="seg" id="modeSeg" role="group" data-ia="modeAria"></div>
+      <div class="modeext" id="lvlExt">
+        <h3 id="lvlQ"></h3>
+        <p class="sub" id="lvlSub"></p>
+        <span class="selwrap"><select id="lvlSel" class="sel" data-ia="lvlAria"></select></span>
+      </div>
+    </section>
+    <section class="block" id="secBlock">
+      <h2 data-i="secH"></h2>
+      <p class="sub"><span data-i="secSub"></span><span id="secGold" data-i="secGold"></span></p>
+      <div class="presets" id="secPresets"></div>
+      <div class="secgrid" id="secGrid"></div>
+    </section>
+    <section class="block" id="vocBlock">
+      <h2 data-i="vocH"></h2>
+      <p class="sub" data-i="vocSub"></p>
+      <div class="seg" id="vocSeg" role="group" data-ia="vocAria">
+        <button data-v="100" data-i="voc100"></button><button data-v="300" data-i="voc300"></button><button data-v="0" data-i="vocAll"></button>
+      </div>
+    </section>
+    <section class="block" id="typeBlock">
       <h2 data-i="type"></h2>
       <p class="sub" id="typeSub"></p>
       <div class="seg" id="typeSeg" role="group" data-ia="type">
         <button data-t="N" data-i="tN"></button><button data-t="V" data-i="tV"></button><button data-t="NV" data-i="tNV"></button>
       </div>
     </section>
-    <section class="block">
-      <h2 data-i="lvlH"></h2>
-      <p class="sub"><span id="lvlBook"></span> <span data-i="lvlSub"></span></p>
-      <span class="selwrap"><select id="lvlSel" class="sel" data-ia="lvlAria"></select></span>
-      <p class="lvlnote" id="lvlNote"></p>
-    </section>
-    <section class="block">
+    <section class="block" id="chBlock">
       <h2 data-i="chH"></h2>
       <p class="sub"><span data-i="chSub"></span><span id="goldNote" data-i="goldNote"></span></p>
       <div class="presets" id="presets"></div>
@@ -453,27 +473,20 @@ const T={
   and:'och', locale:'sv-SE',
   home:'King of parsing, till inst\u00e4llningar',
   h1:'Vad vill du parsa idag?',
-  intro:'Formerna kommer fr\u00e5n Nya testamentet (SBLGNT). V\u00e4lj l\u00e4robok och kapitel, s\u00e5 f\u00e5r du bara former och grammatik du har g\u00e5tt igenom.',
-  book:'L\u00e4robok', type:'Ordklass', tN:'Substantiv', tV:'Verb', tNV:'B\u00e5da',
-  lvlH:'Din kunskapsniv\u00e5', lvlAria:'Kunskapsniv\u00e5',
-  lvlSub:'Niv\u00e5n styr grammatiken, det vill s\u00e4ga vilka tempus, diates, modus och kasus du f\u00e5r parsa. Vilka glosor du \u00f6var p\u00e5 v\u00e4ljer du separat nedan.',
+  intro:'Formerna kommer fr\u00e5n Nya testamentet (SBLGNT). Tr\u00e4na fritt i appens egen ordning, eller f\u00f6lj kapitlen i din l\u00e4robok.',
+  type:'Ordklass', tN:'Substantiv', tV:'Verb', tNV:'B\u00e5da',
   chH:'Glosor att \u00f6va p\u00e5', chSub:'V\u00e4lj vilka kapitels glosor som ska ing\u00e5. H\u00e5ll ned Shift f\u00f6r att v\u00e4lja ett intervall.', goldNote:' Den guldmarkerade rutan visar din kunskapsniv\u00e5.',
   lenH:'Omg\u00e5ngens l\u00e4ngd', lenSub:'Fri \u00f6vning p\u00e5g\u00e5r tills du avslutar.', lenAria:'Antal fr\u00e5gor', free:'Fri \u00f6vning',
   credits:()=>`K\u00e4llor: grekisk text fr\u00e5n ${CREDIT_LINKS.sblgnt} (CC BY 4.0), parsning fr\u00e5n ${CREDIT_LINKS.morph} (CC BY-SA 3.0), glosor fr\u00e5n ${CREDIT_LINKS.step} av Tyndale House Cambridge och STEPBible.org (CC BY 4.0, bearbetade), Strong\u2019s-nummer fr\u00e5n ${CREDIT_LINKS.macula} av Biblica (CC BY 4.0) och principalformer framtagna med ${CREDIT_LINKS.infl} av James Tauber (MIT).`,
   splitWord:'Dela upp ordet', showLabels:'Visa etiketter',
-  bookSub:t=>`<i>${t}</i>. Glosorna och grammatiken f\u00f6ljer bokens kapitel.`, bookNoGram:' Bokens grammatikordning \u00e4r inte inlagd \u00e4nnu, s\u00e5 du v\u00e4ljer grammatiken sj\u00e4lv.',
+  bookNoGram:' Bokens grammatikordning \u00e4r inte inlagd \u00e4nnu, s\u00e5 du v\u00e4ljer grammatiken sj\u00e4lv.',
   typeSub:(v,n)=>`Verb kan \u00f6vas fr\u00e5n kapitel ${v}, substantiv fr\u00e5n kapitel ${n}.`, typeSubF:'V\u00e4lj vilka ordklasser du vill \u00f6va p\u00e5.',
-  lvlBook:b=>`Hur l\u00e5ngt du har kommit i ${b}.`, lvlBookF:'Vilken grammatik du har g\u00e5tt igenom.',
   lv:'niv\u00e5', other:'\u00d6vriga', words:n=>`${n} ord`, otherTitle:'Glosor som inte tas upp i bokens kapitel', chapter:c=>'Kapitel '+c,
   pool:(w,f)=>`${w} glosor och ${f} former att \u00f6va p\u00e5`, poolNone:'Inga former att \u00f6va p\u00e5 \u00e4nnu', pickCh:'V\u00e4lj minst ett kapitel.',
-  lvlNoteF:'Du parsar glosorna fr\u00e5n de kapitel du v\u00e4ljer nedan med den grammatik du v\u00e4ljer h\u00e4r.',
-  lvlNoteM:l=>`Du parsar glosorna fr\u00e5n de kapitel du v\u00e4ljer nedan med grammatiken t.o.m. kapitel ${l}, \u00e4ven om glosorna kommer fr\u00e5n tidigare kapitel.`,
-  lvlNoteA:l=>`Niv\u00e5n f\u00f6ljer det h\u00f6gsta kapitel du v\u00e4ljer nedan, just nu kapitel ${l}. V\u00e4lj en egen niv\u00e5 om du kan mer grammatik \u00e4n glosorna du \u00f6var p\u00e5.`,
-  lvlNoteA0:'Niv\u00e5n f\u00f6ljer det h\u00f6gsta kapitel du v\u00e4ljer nedan.',
   noteV:v=>`Verbformer \u00f6vas fr\u00e5n kapitel ${v}, d\u00e4r presens indikativ introduceras. L\u00e4gg till ett kapitel fr\u00e5n ${v} och upp\u00e5t.`, noteVF:'V\u00e4lj en niv\u00e5 med verb f\u00f6r att \u00f6va verbformer.',
   noteN:n=>`Substantiv \u00f6vas fr\u00e5n kapitel ${n}. L\u00e4gg till ett senare kapitel.`, noteNF:'V\u00e4lj en niv\u00e5 med substantiv.',
   start:'Starta \u00f6vning',
-  upTo:d=>'T.o.m. '+d, upToCh:(c,d)=>`T.o.m. kapitel ${c}${d?': '+d:''}`, auto:'Automatisk: f\u00f6ljer h\u00f6gsta valda kapitel', allCases:'alla kasus',
+  upTo:d=>'T.o.m. '+d, upToCh:(c,d)=>`T.o.m. kapitel ${c}${d?': '+d:''}`, allCases:'alla kasus',
   all:'Alla', chRange:(a,z)=>`Kapitel ${a}\u2013${z}`, clear:'Rensa',
   nAll:'substantiv i alla kasus', nGDV:'substantiv i genitiv, dativ och vokativ', nNA:'substantiv i nominativ och ackusativ',
   verbs:(t,act,m)=>{let s=t.length?'verb i '+andList(t)+' indikativ':'verb';if(act)s+=' aktiv';if(m.length)s+=(t.length?', samt ':' i ')+andList(m);return s},
@@ -499,27 +512,20 @@ const T={
   and:'and', locale:'en-GB',
   home:'King of Parsing, back to settings',
   h1:'What would you like to parse today?',
-  intro:'The forms come from the New Testament (SBLGNT). Choose a textbook and chapters, and you will only get forms and grammar you have already covered.',
-  book:'Textbook', type:'Part of speech', tN:'Nouns', tV:'Verbs', tNV:'Both',
-  lvlH:'Your level', lvlAria:'Level',
-  lvlSub:'The level controls the grammar, that is, which tenses, voices, moods and cases you will parse. You choose the vocabulary to practise separately below.',
+  intro:'The forms come from the New Testament (SBLGNT). Practise freely in the app\u2019s own sequence, or follow the chapters of your textbook.',
+  type:'Part of speech', tN:'Nouns', tV:'Verbs', tNV:'Both',
   chH:'Vocabulary to practise', chSub:'Choose which chapters\u2019 vocabulary to include. Hold down Shift to select a range.', goldNote:' The gold box shows your level.',
   lenH:'Session length', lenSub:'Free practice continues until you end it.', lenAria:'Number of questions', free:'Free practice',
   credits:()=>`Sources: Greek text from the ${CREDIT_LINKS.sblgnt} (CC BY 4.0), parsing from ${CREDIT_LINKS.morph} (CC BY-SA 3.0), glosses from ${CREDIT_LINKS.step} by Tyndale House Cambridge and STEPBible.org (CC BY 4.0, adapted), Strong\u2019s numbers from ${CREDIT_LINKS.macula} by Biblica (CC BY 4.0) and principal parts generated with ${CREDIT_LINKS.infl} by James Tauber (MIT).`,
   splitWord:'Split the word', showLabels:'Show labels',
-  bookSub:t=>`<i>${t}</i>. The vocabulary and grammar follow the book\u2019s chapters.`, bookNoGram:' The book\u2019s grammar sequence has not been added yet, so you choose the grammar yourself.',
+  bookNoGram:' The book\u2019s grammar sequence has not been added yet, so you choose the grammar yourself.',
   typeSub:(v,n)=>`Verbs can be practised from chapter ${v}, nouns from chapter ${n}.`, typeSubF:'Choose which parts of speech you want to practise.',
-  lvlBook:b=>`How far you have got in ${b}.`, lvlBookF:'Which grammar you have covered.',
   lv:'level', other:'Other', words:n=>n===1?'1 word':`${n} words`, otherTitle:'Vocabulary not covered in the book\u2019s chapters', chapter:c=>'Chapter '+c,
   pool:(w,f)=>`${w} words and ${f} forms to practise`, poolNone:'No forms to practise yet', pickCh:'Choose at least one chapter.',
-  lvlNoteF:'You parse the vocabulary from the chapters you choose below, using the grammar you choose here.',
-  lvlNoteM:l=>`You parse the vocabulary from the chapters you choose below, using the grammar up to chapter ${l}, even if the vocabulary comes from earlier chapters.`,
-  lvlNoteA:l=>`The level follows the highest chapter you choose below, currently chapter ${l}. Choose your own level if you know more grammar than the vocabulary you are practising.`,
-  lvlNoteA0:'The level follows the highest chapter you choose below.',
   noteV:v=>`Verb forms are practised from chapter ${v}, where the present indicative is introduced. Add a chapter from ${v} onwards.`, noteVF:'Choose a level with verbs to practise verb forms.',
   noteN:n=>`Nouns are practised from chapter ${n}. Add a later chapter.`, noteNF:'Choose a level with nouns.',
   start:'Start practice',
-  upTo:d=>'Up to '+d, upToCh:(c,d)=>`Up to chapter ${c}${d?': '+d:''}`, auto:'Automatic: follows the highest chapter selected', allCases:'all cases',
+  upTo:d=>'Up to '+d, upToCh:(c,d)=>`Up to chapter ${c}${d?': '+d:''}`, allCases:'all cases',
   all:'All', chRange:(a,z)=>`Chapters ${a}\u2013${z}`, clear:'Clear',
   nAll:'nouns in all cases', nGDV:'nouns in the genitive, dative and vocative', nNA:'nouns in the nominative and accusative',
   verbs:(t,act,m)=>{let s=t.length?'verbs in the '+andList(t)+(act?' active':'')+' indicative':'verbs';if(m.length)s+=(t.length?', plus the ':' in the ')+andList(m);return s},
@@ -584,6 +590,33 @@ Object.assign(T.en,{
   kingQuiz:(i,n)=>`King’s test ${i} of ${n}`,kingWinH:'You are King of Parsing!',kingFailH:n=>`The King’s test ended after ${n} correct in a row.`,
   kingFailSub:'One mistake and the test starts over. Try again whenever you like.',kingAgain:'Try again',toMe:'Go to My page'
 });
+/* fritt läge: sektioner i appens egen ordning */
+Object.assign(T.sv,{
+  modeH:'Hur vill du träna?',modeFree:'Fritt',modeBook:b=>`Enligt ${b}`,modeAria:'Träningsläge',
+  lvlQ:b=>`Hur långt har du kommit i ${b}?`,lvlQF:'Vilken grammatik har du gått igenom?',lvlSubQ:'Detta bestämmer vilken grammatik du parsar.',lvlAria:'Kunskapsnivå',
+  modeSubF:'Appens egen ordning. Formerna är indelade i sektioner, från substantiv till particip och modus, och nivåerna följer sektionerna.',
+  modeSubB:t=>`<i>${t}</i>. Glosorna och grammatiken följer bokens kapitel. Nivåerna räknas på samma sätt som i det fria läget.`,
+  secH:'Sektioner att öva på',secSub:'Välj en eller flera sektioner. Svarsalternativen omfattar också allt i sektionerna före. Håll ned Shift för att välja ett intervall.',
+  secGold:' Den guldmarkerade rutan är sektionen som tar dig till nästa nivå.',
+  secFill:(c,p,n)=>`${Math.min(c,p)} av ${p} rätt bland dina senaste ${n} former`,secDone:'Behärskad',secForms:n=>`${n.toLocaleString('sv-SE')} former`,
+  pNouns:'Substantiv',pPres:'Presensstammen',pTenses:'Övriga tempus',pMoods:'Particip och modus',
+  vocH:'Ordförråd',vocSub:'Orden väljs efter hur ofta de förekommer i Nya testamentet.',vocAria:'Ordförråd',voc100:'100 vanligaste',voc300:'300 vanligaste',vocAll:'Alla',
+  pickSec:'Välj minst en sektion.',secGram:s=>`Du övar på ${s}.`,
+  noPracticeSec:'Det finns inga sådana former med dina val på startsidan. Välj fler sektioner eller ett större ordförråd.'
+});
+Object.assign(T.en,{
+  modeH:'How do you want to practise?',modeFree:'Free',modeBook:b=>`Following ${b}`,modeAria:'Practice mode',
+  lvlQ:b=>`How far have you got in ${b}?`,lvlQF:'Which grammar have you covered?',lvlSubQ:'This determines which grammar you parse.',lvlAria:'Level',
+  modeSubF:'The app’s own sequence. The forms are divided into sections, from nouns to participles and moods, and the levels follow the sections.',
+  modeSubB:t=>`<i>${t}</i>. The vocabulary and grammar follow the book’s chapters. Levels are counted the same way as in free mode.`,
+  secH:'Sections to practise',secSub:'Choose one or more sections. The answer options also cover everything in the earlier sections. Hold down Shift to select a range.',
+  secGold:' The gold box is the section that takes you to the next level.',
+  secFill:(c,p,n)=>`${Math.min(c,p)} of ${p} correct among your last ${n} forms`,secDone:'Mastered',secForms:n=>`${n.toLocaleString('en-GB')} forms`,
+  pNouns:'Nouns',pPres:'Present stem',pTenses:'Other tenses',pMoods:'Participles and moods',
+  vocH:'Vocabulary',vocSub:'Words are chosen by how often they occur in the New Testament.',vocAria:'Vocabulary',voc100:'Top 100',voc300:'Top 300',vocAll:'All',
+  pickSec:'Choose at least one section.',secGram:s=>`You are practising the ${s}.`,
+  noPracticeSec:'There are no such forms with your choices on the start page. Choose more sections or a larger vocabulary.'
+});
 let LANG='sv',L=LBL.sv;
 const tx=(k,...a)=>{const v=T[LANG][k];return typeof v==='function'?v(...a):v};
 function andList(a){return a.length<2?a.join(''):a.slice(0,-1).join(', ')+' '+tx('and')+' '+a[a.length-1]}
@@ -637,38 +670,133 @@ function gramText(M){
   const pre=B.gram?tx('gramPre',level()):tx('gramPreF');
   return parts.length?pre+andList(parts)+'.':tx('gramNone');
 }
+/* ---------- sektioner: appens egen ordning ----------
+   En nivå per sektion. Varje sektion anger vilka grammatiska moment den bygger på,
+   så att svarsalternativen kan räknas fram med samma maskineri som i bokläget. */
+const SECTIONS=[
+  ['d12','första och andra deklinationen','first and second declension',[6,7]],
+  ['d3','tredje deklinationen','third declension',[6,7]],
+  ['pa','presens aktiv','present active',[16]],
+  ['pm','presens medium/passiv','present middle/passive',[18]],
+  ['con','kontraherade verb','contract verbs',[16,18]],
+  ['impf','imperfekt','imperfect',[21]],
+  ['fut','futurum aktiv/medium','future active/middle',[19]],
+  ['a1','aorist 1 aktiv/medium','first aorist active/middle',[22]],
+  ['a2','aorist 2 aktiv/medium','second aorist active/middle',[22]],
+  ['pass','aorist och futurum passiv','aorist and future passive',[24]],
+  ['pf','perfekt och pluskvamperfekt','perfect and pluperfect',[25]],
+  ['ptp','presens particip','present participle',[27]],
+  ['pta','aorist och perfekt particip','aorist and perfect participle',[28,30]],
+  ['subj','konjunktiv','subjunctive',[31]],
+  ['ii','infinitiv och imperativ','infinitive and imperative',[32,33]]
+];
+const secText=s=>LANG==='en'?s[2]:s[1];
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+/* momenten som ingår t.o.m. sektion i */
+const secMoments=i=>new Set(SECTIONS.slice(0,i+1).flatMap(s=>s[3]));
+/* deklination ur uppslagsformen: 'd1', 'd2', 'd3' eller '' (oböjligt) */
+function declOf(w){
+  const g=norm((w.w.split(',')[1]||'').trim().replace(/^-/,'')),h=norm(w.h);
+  if(!g||/^(ο|η|το|οι|αι|τα)$/.test(g)) return '';
+  if(/ου$/.test(g)) return /(ης|ας)$/.test(h)?'d1':'d2';
+  if(/(ης|ας|α|η)$/.test(g)) return 'd1';
+  if(/ω$/.test(g)) return 'd2';
+  return 'd3';
+}
+const isContract=w=>/(εω|αω|οω|εομαι|αομαι|οομαι)$/.test(norm(w.h));
+/* andra aoristen: avgörs av principalformen för aorist, annars av formens ändelse */
+function isAor2(w,f){
+  const pp=(w.pp||'').replace(/^\([^)]*\),?\s*/,'').split(',').map(s=>s.trim()),aor=pp[1]||'';
+  const fn=norm(f.f);
+  if(aor&&aor!=='–'){
+    const alts=aor.split(/\s+or\s+/).map(a=>norm(a.trim()));
+    const a1=alts.filter(a=>/(α|αμην)$/.test(a)),a2=alts.filter(a=>!/(α|αμην)$/.test(a));
+    if(!a2.length) return false;
+    if(!a1.length) return true;
+    // två aoristformer (ἔστην och ἔστησα): välj den vars stam passar formen bäst, lika = andra aorist
+    const stem=a=>a.replace(/(αμην|ομην|α|ον|ην|ων|ν)$/,'');
+    const best=l=>Math.max(...l.map(a=>fn.includes(stem(a))?stem(a).length:0));
+    return best(a2)>=best(a1);
+  }
+  return /(ον|ες|ομεν|ετε|ομην|ετο|ομεθα|εσθε|οντο)$/.test(fn);
+}
+/* sektionens index för en form med en viss parsningskod, eller -1 */
+function secOf(w,f,c){
+  const m=f._s||(f._s={});
+  return c in m?m[c]:(m[c]=secOf0(w,f,c));
+}
+function secOf0(w,f,c){
+  if(w.t==='N') return declOf(w)==='d3'?1:0;
+  const t=c[0],v=c[1],m=c[2];
+  if(m==='I'){
+    if(t==='P') return isContract(w)?4:v==='A'?2:3;
+    if(t==='I') return 5;
+    if(t==='F') return v==='P'?9:6;
+    if(t==='A') return v==='P'?9:isAor2(w,f)?8:7;
+    return 10;
+  }
+  if(m==='P') return t==='P'?11:12;
+  if(m==='S') return 13;
+  if(m==='N'||m==='D') return 14;
+  return -1;
+}
+/* ordens frekvens i NT och plats i frekvensordning */
+const FREQ=W.map(w=>(byWord[w.i]||[]).reduce((s,f)=>s+(+f.n||0),0));
+const RANK=[];W.map(w=>w.i).sort((a,b)=>FREQ[b]-FREQ[a]).forEach((wi,r)=>{RANK[wi]=r});
+
 /* kapitel där ett moment introduceras i vald bok, eller null */
-const momCh=k=>B.gram?B.gram[k]:null;
+const momCh=k=>B.gram&&!FREE()?B.gram[k]:null;
 const firstCh=ks=>{const c=ks.map(momCh).filter(x=>x!=null);return c.length?Math.min(...c):null};
 
 /* ---------- settings ---------- */
-let S={types:'NV',chapters:[],len:20,level:0,book:'mounce',by:{}};
-try{const s=JSON.parse(localStorage.getItem('kop-settings')||'null');if(s&&Array.isArray(s.chapters))S=Object.assign(S,s)}catch(e){}
+let S={types:'NV',chapters:[],len:20,level:0,book:'mounce',by:{},mode:'free',secs:[0],vocab:300};
+/* sparade inställningar utan läge kommer från tiden före det fria läget: behåll bokläget */
+try{const s=JSON.parse(localStorage.getItem('kop-settings')||'null');if(s&&Array.isArray(s.chapters)){S=Object.assign(S,s);if(!s.mode)S.mode='book'}}catch(e){}
+if(S.mode!=='book') S.mode='free';
+if(!Array.isArray(S.secs)) S.secs=[0];
+S.secs=S.secs.filter(i=>Number.isInteger(i)&&i>=0&&i<SECTIONS.length);
+if(![100,300,0].includes(S.vocab)) S.vocab=300;
+const FREE=()=>S.mode==='free';
 if(!S.by||typeof S.by!=='object') S.by={};
 if(!S.by[S.book]&&S.chapters.length) S.by[S.book]={chapters:S.chapters,level:S.level};
+const autoLevel=()=>{const c=S.chapters.filter(x=>x!==99);return S.chapters.includes(99)?Math.max(0,...CHAPTERS.filter(x=>x!==99)):Math.max(0,...c)};
 function defaultChapters(){const c=CHAPTERS.filter(x=>x!==99);return c.slice(0,Math.ceil(c.length*2/3))}
 function switchBook(id){
   if(CHAPTERS.length) S.by[S.book]={chapters:S.chapters,level:S.level};
   useBook(id);S.book=B.id;
   const st=S.by[B.id]||{};
   S.chapters=(Array.isArray(st.chapters)?st.chapters:defaultChapters()).filter(c=>CHAPTERS.includes(c));
-  S.level=B.gram?(+st.level||0):(+st.level||33);
+  S.level=B.gram?clampLevel(+st.level||autoLevel()):(+st.level||33);
 }
+/* kapitlen som går att välja som nivå i boken */
+function levelChs(){return B.id==='mounce'?Array.from({length:31},(_,i)=>i+6):CHAPTERS.filter(c=>c!==99)}
+function clampLevel(x){const c=levelChs();return c.length?Math.max(c[0],Math.min(c[c.length-1],x||0)):x}
 switchBook(S.book);
 function save(){S.by[S.book]={chapters:S.chapters,level:S.level};try{localStorage.setItem('kop-settings',JSON.stringify(S))}catch(e){}}
 let life={a:0,c:0};
 try{const l=JSON.parse(localStorage.getItem('kop-life')||'null');if(l)life=l}catch(e){}
 function saveLife(){try{localStorage.setItem('kop-life',JSON.stringify(life))}catch(e){}}
 
-const autoLevel=()=>{const c=S.chapters.filter(x=>x!==99);return S.chapters.includes(99)?Math.max(0,...CHAPTERS.filter(x=>x!==99)):Math.max(0,...c)};
 const level=()=>S.level||autoLevel();
 /* uppsättningen grammatiska moment som är inlärda på nuvarande nivå */
 function momentSet(){
+  if(FREE()) return S.secs.length?secMoments(Math.max(...S.secs)):new Set();
   if(!B.gram) return new Set(MOMENTS.map(m=>m[0]).filter(k=>k<=(S.level||33)));
   const lvl=level();return new Set(MOMENTS.map(m=>m[0]).filter(k=>B.gram[k]<=lvl));
 }
 
+/* fritt läge: ord inom valt ordförråd, former vars parsning hör till en vald sektion */
+function freePool(secs,M){
+  const sel=new Set(secs),ws=[];
+  W.forEach(w=>{
+    if(S.vocab&&RANK[w.i]>=S.vocab) return;
+    const fs=(byWord[w.i]||[]).filter(f=>f.codes.some(c=>sel.has(secOf(w,f,c))&&learned(w.t,c,M)));
+    if(fs.length) ws.push({w,fs});
+  });
+  return ws;
+}
 function buildPool(){
+  if(FREE()) return freePool(S.secs,momentSet());
   const M=momentSet(),chs=new Set(S.chapters),ws=[];
   W.forEach(w=>{
     if(!chs.has(w.ch)||!S.types.includes(w.t)) return;
@@ -681,15 +809,70 @@ function buildPool(){
 /* ---------- setup render ---------- */
 const $=id=>document.getElementById(id);
 let lastClicked=null;
+let lastSec=null;
+const SEC_PRESETS=[['pNouns',0,1],['pPres',2,5],['pTenses',6,10],['pMoods',11,14]];
+function renderFreeSetup(){
+  const P=$('secPresets');
+  P.innerHTML=`<button data-p="all">${tx('all')}</button>`+SEC_PRESETS.map(([k,a,z])=>`<button data-p="${a}-${z}">${tx(k)}</button>`).join('')+`<button data-p="none">${tx('clear')}</button>`;
+  P.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    const p=b.dataset.p;
+    if(p==='all') S.secs=SECTIONS.map((_,i)=>i);
+    else if(p==='none') S.secs=[];
+    else{const [a,z]=p.split('-').map(Number);S.secs=SECTIONS.map((_,i)=>i).filter(i=>i>=a&&i<=z)}
+    save();renderSetup();
+  });
+  document.querySelectorAll('#vocSeg button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.v===S.vocab));
+  const showFill=ACC&&histReady,st=showFill?sectionStats():null,cur=showFill?computedTitle(st):-1;
+  $('secGold').hidden=!showFill;
+  const g=$('secGrid');g.innerHTML='';
+  SECTIONS.forEach((sc,i)=>{
+    const sp=freePool([i],secMoments(i)),nw=sp.length,n=sp.reduce((a,p)=>a+p.fs.length,0);
+    const b=document.createElement('button');
+    b.className='ch'+(i===cur?' lvl':'');
+    b.setAttribute('aria-pressed',S.secs.includes(i));
+    b.disabled=n===0;
+    const lv=i===cur?` · <span class="lv">${tx('lv')}</span>`:'';
+    b.innerHTML=`<span class="k">${i+1}${lv}</span><span class="s">${esc(cap(secText(sc)))}</span><span class="w">${tx('words',nw)}</span><span class="c">${tx('secForms',n)}</span>`;
+    b.title=cap(secText(sc));
+    if(st){
+      const x=st[i],pf=x.ok?1:Math.min(x.c,PASS)/PASS;
+      b.style.setProperty('--fill',(pf*100).toFixed(0)+'%');
+      if(x.ok) b.classList.add('full');
+      b.title+=' · '+(x.ok?tx('secDone'):tx('secFill',x.c,PASS,NEED));
+    }
+    b.onclick=e=>{
+      if(e.shiftKey&&lastSec!==null){
+        const [a,z]=[Math.min(lastSec,i),Math.max(lastSec,i)];
+        for(let k=a;k<=z;k++) if(!S.secs.includes(k)) S.secs.push(k);
+      } else S.secs=S.secs.includes(i)?S.secs.filter(k=>k!==i):[...S.secs,i];
+      S.secs.sort((a,z)=>a-z);lastSec=i;save();renderSetup();
+    };
+    g.appendChild(b);
+  });
+  const pool=buildPool(),nf=pool.reduce((a,p)=>a+p.fs.length,0);
+  $('poolLine').textContent=pool.length?tx('pool',pool.length,nf.toLocaleString(tx('locale'))):tx('poolNone');
+  $('gramLine').textContent=S.secs.length?tx('secGram',andList(S.secs.map(i=>secText(SECTIONS[i])))):tx('pickSec');
+  $('poolNote').classList.add('hidden');
+  setTop('setup');
+  setActions([{label:tx('start'),primary:true,disabled:!pool.length,fn:()=>startSession()}],'');
+}
 function renderSetup(){
-  $('bookBlock').hidden=BOOKLIST.length<2;
-  const bs=$('bookSeg');
-  bs.innerHTML=BOOKLIST.map(b=>`<button data-b="${b.id}" aria-pressed="${b.id===B.id}">${esc(b.name)}</button>`).join('');
-  bs.querySelectorAll('button').forEach(b=>b.onclick=()=>{switchBook(b.dataset.b);lastClicked=null;buildLevelSel();save();renderSetup()});
-  $('bookSub').innerHTML=tx('bookSub',esc(B.title))+(B.gram?'':tx('bookNoGram'));
+  const free=FREE();
+  const ms=$('modeSeg');
+  ms.innerHTML=`<button data-m="free" aria-pressed="${free}">${tx('modeFree')}</button>`+BOOKLIST.map(b=>`<button data-m="book" data-b="${b.id}" aria-pressed="${!free&&b.id===B.id}" aria-expanded="${!free&&b.id===B.id}" aria-controls="lvlExt">${esc(tx('modeBook',b.name))}</button>`).join('');
+  ms.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    S.mode=b.dataset.m;
+    if(b.dataset.b&&b.dataset.b!==B.id){switchBook(b.dataset.b);lastClicked=null;buildLevelSel()}
+    save();renderSetup();
+  });
+  $('modeSub').innerHTML=free?tx('modeSubF'):tx('modeSubB',esc(B.title))+(B.gram?'':tx('bookNoGram'));
+  ['secBlock','vocBlock'].forEach(id=>{$(id).hidden=!free});
+  ['lvlExt','typeBlock','chBlock'].forEach(id=>{$(id).hidden=free});
+  if(free) return renderFreeSetup();
+  $('lvlQ').textContent=B.gram?tx('lvlQ',B.name):tx('lvlQF');
+  $('lvlSub').textContent=tx('lvlSubQ');
   const nC=momCh(6),vC=momCh(16);
   $('typeSub').textContent=B.gram?tx('typeSub',vC,nC):tx('typeSubF');
-  $('lvlBook').textContent=B.gram?tx('lvlBook',B.name):tx('lvlBookF');
   renderPresets();
   $('goldNote').hidden=!B.gram;
   document.querySelectorAll('#typeSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.t===S.types));
@@ -728,12 +911,7 @@ function renderSetup(){
   $('poolLine').textContent=pool.length?tx('pool',pool.length,nf.toLocaleString(tx('locale'))):tx('poolNone');
   const M=momentSet();
   $('gramLine').textContent=S.chapters.length||S.level?gramText(M):tx('pickCh');
-  const sel=$('lvlSel');sel.value=String(S.level);sel.classList.toggle('manual',!!S.level&&!!B.gram);
-  $('lvlNote').textContent=!B.gram
-    ?tx('lvlNoteF')
-    :S.level
-    ?tx('lvlNoteM',S.level)
-    :(S.chapters.length?tx('lvlNoteA',autoLevel()):tx('lvlNoteA0'));
+  $('lvlSel').value=String(S.level);
   const note=$('poolNote');let msg='';
   if(S.types.includes('V')&&S.chapters.length&&!M.has(16)) msg=B.gram?tx('noteV',vC):tx('noteVF');
   else if(S.types==='N'&&S.chapters.length&&!M.has(6)&&!M.has(7)) msg=B.gram?tx('noteN',nC):tx('noteNF');
@@ -742,18 +920,16 @@ function renderSetup(){
   setActions([{label:tx('start'),primary:true,disabled:!pool.length,fn:()=>startSession()}],'');
 }
 document.querySelectorAll('#typeSeg button').forEach(b=>b.onclick=()=>{S.types=b.dataset.t;save();renderSetup()});
+document.querySelectorAll('#vocSeg button').forEach(b=>b.onclick=()=>{S.vocab=+b.dataset.v;save();renderSetup()});
 document.querySelectorAll('#lenSeg button').forEach(b=>b.onclick=()=>{S.len=+b.dataset.l;save();renderSetup()});
 function buildLevelSel(){
   const sel=$('lvlSel');
   if(!B.gram){
     sel.innerHTML=MOMENTS.map(m=>`<option value="${m[0]}">${tx('upTo',momText(m))}</option>`).join('');
   } else if(B.id==='mounce'){
-    sel.innerHTML=`<option value="0">${tx('auto')}</option>`+
-      Array.from({length:31},(_,i)=>i+6).map(c=>`<option value="${c}">${tx('upToCh',c,L.levels[c]||'')}</option>`).join('');
+    sel.innerHTML=levelChs().map(c=>`<option value="${c}">${tx('upToCh',c,L.levels[c]||'')}</option>`).join('');
   } else {
-    const chs=CHAPTERS.filter(c=>c!==99);
-    sel.innerHTML=`<option value="0">${tx('auto')}</option>`+
-      chs.map(c=>{let d=MOMENTS.filter(m=>B.gram[m[0]]===c).map(momText);if(B.gram[6]===c&&B.gram[7]===c)d=[tx('allCases'),...d.slice(2)];return `<option value="${c}">${tx('upToCh',c,andList(d))}</option>`}).join('');
+    sel.innerHTML=levelChs().map(c=>{let d=MOMENTS.filter(m=>B.gram[m[0]]===c).map(momText);if(B.gram[6]===c&&B.gram[7]===c)d=[tx('allCases'),...d.slice(2)];return `<option value="${c}">${tx('upToCh',c,andList(d))}</option>`}).join('');
   }
   sel.onchange=()=>{S.level=+sel.value;save();renderSetup()};
 }
@@ -796,7 +972,7 @@ let sess=null,q=null;
 function startSession(retry,opt){if(!Array.isArray(retry))retry=null;opt=opt||{};
   const pool=opt.king?kingPool():buildPool();
   if(!pool.length&&!retry) return;
-  sess={pool,M:opt.king?new Set(MOMENTS.map(m=>m[0])):momentSet(),total:opt.king?KING_LEN:retry?retry.length:S.len,i:0,correct:0,answered:0,misses:[],used:new Set(),retry:retry?[...retry]:null,king:!!opt.king};
+  sess={pool,M:opt.king?new Set(MOMENTS.map(m=>m[0])):opt.M||momentSet(),total:opt.king?KING_LEN:retry?retry.length:S.len,i:0,correct:0,answered:0,misses:[],used:new Set(),retry:retry?[...retry]:null,king:!!opt.king};
   if(retry&&!pool.length) sess.pool=kingPool();
   show('quiz');nextQuestion();
 }
@@ -1162,30 +1338,31 @@ let HIST=[],histReady=false;
 let PROF={school:'',course:'',title:0,king_at:null};
 const FKEY={};F.forEach(f=>{FKEY[f.f+'|'+W[f.w].h]=f});
 const TITLES=[['Bonde','Farmer'],['Fiskare','Fisherman'],['Herde','Shepherd'],['Köpman','Merchant'],['Tullindrivare','Tax collector'],['Lärling','Apprentice'],['Lärjunge','Disciple'],['Skrivare','Scribe'],['Lärare','Teacher'],['Författare','Author'],['Talare','Orator'],['Filosof','Philosopher'],['Äldste','Elder'],['Ståthållare','Governor'],['Senator','Senator'],['Prins','Prince'],['King of Parsing','King of Parsing']];
-const KING=16,NEED=20,PASS=16,KING_LEN=50; // en titel per moment: minst 16 rätt av de senaste 20 formerna utan ledtråd
+const KING=16,NEED=20,PASS=16,KING_LEN=50; // en titel per sektion: minst 16 rätt av de senaste 20 formerna utan ledtråd
 const titleName=i=>TITLES[i][LANG==='en'?1:0];
 const isNounCode=c=>/^[NGDAV][SP][MFN]$/.test(c);
 function rowForm(r){return FKEY[r.form+'|'+r.lemma]}
 function rowType(r){const f=rowForm(r);return f?W[f.w].t:(isNounCode(r.expected)?'N':'V')}
-function momentOf(code,t){return t==='N'?nounCh(code):verbCh(code)}
-function momentStats(){
-  const by={};
+/* sektionen för ett sparat svar, eller -1 om formen inte finns i datan */
+function rowSec(r){const f=rowForm(r);return f?secOf(W[f.w],f,r.expected):-1}
+/* per sektion: de senaste formerna utan ledtråd. Räknas ur svaren, så framstegen gäller i båda lägena. */
+function sectionStats(){
+  const by=SECTIONS.map(()=>[]);
   for(let i=HIST.length-1;i>=0;i--){
     const r=HIST[i];if(r.hint) continue;
-    const m=momentOf(r.expected,rowType(r));if(m===99) continue;
-    const a=by[m]||(by[m]=[]);if(a.length<NEED) a.push(!!r.parse_ok);
+    const k=rowSec(r);if(k<0) continue;
+    if(by[k].length<NEED) by[k].push(!!r.parse_ok);
   }
-  const out={};MOMENTS.forEach(([m])=>{const a=by[m]||[],c=a.filter(Boolean).length;out[m]={n:a.length,c,ok:a.length>=NEED&&c>=PASS}});
-  return out;
+  return by.map(a=>{const c=a.filter(Boolean).length;return {n:a.length,c,ok:a.length>=NEED&&c>=PASS}});
 }
-function computedTitle(st){let t=0;for(const [m] of MOMENTS){if(st[m].ok)t++;else break}return t}
-function currentTitle(){return PROF.king_at?KING:Math.max(+PROF.title||0,computedTitle(momentStats()))}
+function computedTitle(st){let t=0;for(const x of st){if(x.ok)t++;else break}return t}
+function currentTitle(){return PROF.king_at?KING:Math.max(+PROF.title||0,computedTitle(sectionStats()))}
 function titleProgress(){
   const t=currentTitle();
   if(t>=KING) return {t,p:100};
-  if(t===KING-1) return {t,p:Math.round(Math.min(1,(+PROF.king_best||0)/KING_LEN)*100)};
-  const st=momentStats()[MOMENTS[t][0]];
-  return {t,p:Math.round(Math.min(st.c,PASS)/PASS*100),st,mom:MOMENTS[t]};
+  if(t>=KING-1) return {t,p:Math.round(Math.min(1,(+PROF.king_best||0)/KING_LEN)*100)};
+  const st=sectionStats()[t];
+  return {t,p:Math.round(Math.min(st.c,PASS)/PASS*100),st,sec:t};
 }
 function saveProfile(fields){
   Object.assign(PROF,fields);
@@ -1194,7 +1371,7 @@ function saveProfile(fields){
 }
 function syncTitle(popup){
   if(!histReady) return;
-  const t=computedTitle(momentStats());
+  const t=computedTitle(sectionStats());
   if(t>(+PROF.title||0)){
     const old=+PROF.title||0;
     saveProfile({title:t});
@@ -1290,9 +1467,10 @@ function weakForms(){
   cand.sort((a,b)=>b[0]-a[0]);
   return shuffle(cand.slice(0,60).map(x=>x[1])).slice(0,S.len||20);
 }
-function momentForms(m){
-  const pool=buildPool(),M=momentSet(),out=[];
-  pool.forEach(p=>p.fs.forEach(f=>{if(f.codes.some(c=>learned(p.w.t,c,M)&&momentOf(c,p.w.t)===m)) out.push(f)}));
+/* former i en sektion, ur hela ordförrådet, med grammatiken t.o.m. sektionen */
+function sectionForms(k){
+  const M=secMoments(k),out=[];
+  W.forEach(w=>(byWord[w.i]||[]).forEach(f=>{if(f.codes.some(c=>secOf(w,f,c)===k&&learned(w.t,c,M))) out.push(f)}));
   return shuffle(out).slice(0,S.len||20);
 }
 function kingPool(){
@@ -1306,7 +1484,7 @@ function titlePopup(t,old){
   const m=$('modal');
   $('mKick').textContent=tx(t>=KING?'kingKick':'newTitle');
   $('mTitle').textContent=titleName(t);
-  $('mText').textContent=t>=KING?tx('kingText'):tx('newTitleText',momText(MOMENTS[t-1]),t<KING?titleName(t+1):'');
+  $('mText').textContent=t>=KING?tx('kingText'):tx('newTitleText',secText(SECTIONS[t-1]),t<KING?titleName(t+1):'');
   $('mOk').textContent=tx('cont');
   m.classList.remove('hidden');
   setTimeout(()=>$('mOk').focus(),30);
@@ -1353,12 +1531,12 @@ function renderMe(){
   show('me');
   const box=$('me');
   if(!ACC){box.innerHTML=`<section class="block"><p class="sub" style="margin:0">${tx('noAccount')}</p></section>`;return}
-  const {t,p,st,mom}=titleProgress();
+  const {t,p,st,sec}=titleProgress();
   let next='';
   if(!histReady) next=`<p class="me-next">${tx('loadingHist')}</p>`;
   else if(t>=KING) next=`<p class="me-next">${tx('isKing')}</p>`;
   else if(t===KING-1) next=`<p class="me-next">${tx('kingInfo',KING_LEN)}</p><div class="btnrow"><button class="primary" id="kingBtn">${tx('kingTest')}</button></div>`;
-  else next=`<p class="me-next">${tx('nextReq',momText(mom),st.c,PASS,NEED)}</p><div class="lvlbar">${bar(p,'gold')}<div class="lvlrow"><span>${Math.min(st.c,PASS)} / ${PASS}</span><span>${tx('nextLevel')} <b>${esc(titleName(t+1))}</b></span></div></div><div class="btnrow"><button class="primary" id="nextBtn">${tx('practiceNext')}</button></div><p class="me-note" id="nextNote" hidden></p>`;
+  else next=`<p class="me-next">${tx('nextReq',secText(SECTIONS[sec]),st.c,PASS,NEED)}</p><div class="lvlbar">${bar(p,'gold')}<div class="lvlrow"><span>${Math.min(st.c,PASS)} / ${PASS}</span><span>${tx('nextLevel')} <b>${esc(titleName(t+1))}</b></span></div></div><div class="btnrow"><button class="primary" id="nextBtn">${tx('practiceNext')}</button></div><p class="me-note" id="nextNote" hidden></p>`;
   let h=`<section class="block mehero">
     <p class="me-kick">${tx('yourTitle',t+1,TITLES.length)}</p>
     <h1 class="me-title">${esc(titleName(t))}</h1>${next}</section>`;
@@ -1404,8 +1582,8 @@ function renderMe(){
   box.innerHTML=h;
   setTop('me');
   setActions([{label:tx('backHome'),primary:true,fn:()=>{show('setup');renderSetup()}}],'');
-  const start=(list,note)=>{if(list.length) startSession(list);else{const n=$(note);n.textContent=tx('noPractice');n.hidden=false}};
-  if($('nextBtn')) $('nextBtn').onclick=()=>start(momentForms(mom[0]),'nextNote');
+  const start=(list,note)=>{if(list.length) startSession(list);else{const n=$(note);n.textContent=tx(FREE()?'noPracticeSec':'noPractice');n.hidden=false}};
+  if($('nextBtn')) $('nextBtn').onclick=()=>{const l=sectionForms(sec);if(l.length) startSession(l,{M:secMoments(sec)});else{const n=$('nextNote');n.textContent=tx('noPractice');n.hidden=false}};
   if($('kingBtn')) $('kingBtn').onclick=()=>startSession(null,{king:true});
   if($('weakBtn')) $('weakBtn').onclick=()=>start(weakForms(),'weakNote');
   if($('missBtn')) $('missBtn').onclick=()=>startSession(shuffle(MISSES));
