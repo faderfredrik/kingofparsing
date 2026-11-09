@@ -250,6 +250,13 @@ kbd{font-family:var(--ui);background:var(--surface);border-radius:6px;padding:2p
 .ch[aria-pressed="true"]::before{background:var(--fillc-sel)}
 .ch.full{box-shadow:inset 0 0 0 2px var(--right)}
 .ch.full.lvl{box-shadow:inset 0 0 0 3px var(--gold)}
+.ch .rp{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;color:var(--ink)}
+.ch[aria-pressed="true"] .rp{color:var(--lapis-ink)}
+.ch .rp svg,.reptag svg{width:12px;height:12px;flex:none}
+.reptag{display:inline-flex;align-items:center;gap:5px;background:var(--gold-tint);color:var(--ink);border-radius:999px;padding:3px 10px 3px 8px;font-size:12.5px;font-weight:700;vertical-align:middle;white-space:nowrap}
+.repblock h2{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.repblock .frow{grid-template-columns:minmax(110px,180px) 1fr auto}
+.repblock .frow b{white-space:nowrap}
 @media (prefers-reduced-motion:reduce){.ch::before{transition:none}}
 .tpill{display:inline-flex;align-items:center;gap:8px;color:var(--ink)!important}
 .mebtn{color:var(--ink)!important;font-weight:700}
@@ -578,6 +585,7 @@ Object.assign(T.sv,{
   practiceNext:'Öva mot nästa nivå',kingTest:'Gör Kungaprovet',
   kingInfo:n=>`Alla nivåer under kungen är dina. Klara ${n} slumpade former från hela Nya testamentet i rad, utan fel och utan ledtråd, så blir du King of Parsing.`,
   isKing:'Du är King of Parsing. Högre än så går det inte.',
+  repTag:'Repetition',repH:'Repetera det du har lärt dig',repSub:p=>`Det här har du redan klarat, men bland dina senaste svar har du nu färre än ${p} rätt av 20. Nivån behåller du. Repetera innan det glöms bort.`,repBtn:'Repetera nu',repMix:'Övningen blandar in former från Repetera. De är markerade så här:',secRep:(c,p,n)=>`Klarad, men repetera: ${c} av ${p} rätt bland dina senaste ${n} former`,repLbl:'repetera',
   weakH:'Att öva på',weakSub:'Bygger på dina senaste svar.',weakEmpty:n=>`Svara på ${n} ord till, så visas här vad du behöver öva på.`,
   fieldsH:'Träffsäkerhet per fält',confH:'Vanligaste förväxlingarna',confRow:(e,a)=>`<b>${e}</b> blir <b>${a.toLowerCase()}</b>`,confNum:(n,t,p)=>`${n} av ${t} gånger (${p} %)`,
   phenH:'Fenomen',practiceWeak:'Öva mina svagheter',noPractice:'Det finns inga sådana former med dina val på startsidan. Välj fler kapitel eller en högre nivå.',
@@ -599,6 +607,7 @@ Object.assign(T.en,{
   practiceNext:'Practise for the next level',kingTest:'Take the King’s test',
   kingInfo:n=>`Every level below the king is yours. Get ${n} random forms from the whole New Testament right in a row, with no mistakes and no hints, and you become King of Parsing.`,
   isKing:'You are King of Parsing. It doesn’t get any higher than this.',
+  repTag:'Review',repH:'Keep what you have learned',repSub:p=>`You have already mastered these, but you now have fewer than ${p} correct among your last 20 answers. You keep your level. Review them before they are forgotten.`,repBtn:'Review now',repMix:'The session mixes in forms from Review. They are marked like this:',secRep:(c,p,n)=>`Mastered, but review: ${c} of ${p} correct among your last ${n} forms`,repLbl:'review',
   weakH:'What to practise',weakSub:'Based on your recent answers.',weakEmpty:n=>`Answer ${n} more words and what you need to practise will show up here.`,
   fieldsH:'Accuracy per field',confH:'Most common mix-ups',confRow:(e,a)=>`<b>${e}</b> taken as <b>${a.toLowerCase()}</b>`,confNum:(n,t,p)=>`${n} of ${t} times (${p} %)`,
   phenH:'Features',practiceWeak:'Practise my weak spots',noPractice:'There are no such forms with your choices on the start page. Choose more chapters or a higher level.',
@@ -907,10 +916,12 @@ function renderFreeSetup(){
     b.innerHTML=`<span class="k">${i+1}${lv}</span><span class="s">${esc(cap(secText(sc)))}</span><span class="w">${tx('words',nw)}</span><span class="c">${tx('secForms',n)}</span>`;
     b.title=cap(secText(sc));
     if(st){
-      const x=st[i],pf=x.ok?1:Math.min(x.c,PASS)/PASS;
+      // klarade sektioner som sjunkit under kravet: ramen visar att de är klarade, fyllningen hur mycket som sitter kvar
+      const x=st[i],rep=i<cur&&!x.ok,pf=x.ok?1:Math.min(x.c,PASS)/PASS;
       b.style.setProperty('--fill',(pf*100).toFixed(0)+'%');
-      if(x.ok) b.classList.add('full');
-      b.title+=' · '+(x.ok?tx('secDone'):tx('secFill',x.c,PASS,NEED));
+      if(x.ok||rep) b.classList.add('full');
+      if(rep){b.classList.add('rep');b.querySelector('.k').insertAdjacentHTML('beforeend',` · <span class="rp">${REP_ICON}${tx('repLbl')}</span>`)}
+      b.title+=' · '+(x.ok?tx('secDone'):rep?tx('secRep',x.c,PASS,NEED):tx('secFill',x.c,PASS,NEED));
     }
     b.onclick=e=>{
       if(e.shiftKey&&lastSec!==null){
@@ -1046,7 +1057,7 @@ let sess=null,q=null;
 function startSession(retry,opt){if(!Array.isArray(retry))retry=null;opt=opt||{};
   const pool=opt.king?kingPool():buildPool();
   if(!pool.length&&!retry) return;
-  sess={pool,M:opt.king?new Set(MOMENTS.map(m=>m[0])):opt.M||momentSet(),total:opt.king?KING_LEN:retry?retry.length:S.len,i:0,correct:0,answered:0,misses:[],used:new Set(),retry:retry?[...retry]:null,king:!!opt.king};
+  sess={pool,M:opt.king?new Set(MOMENTS.map(m=>m[0])):opt.M||momentSet(),total:opt.king?KING_LEN:retry?retry.length:S.len,i:0,correct:0,answered:0,misses:[],used:new Set(),retry:retry?[...retry]:null,king:!!opt.king,rep:opt.rep||null};
   if(retry&&!pool.length) sess.pool=kingPool();
   show('quiz');nextQuestion();
 }
@@ -1127,7 +1138,7 @@ function renderQuiz(){
   const {f,word}=q;
   $('barFill').style.width=sess.total?((sess.i-1)/sess.total*100)+'%':'0%';
   const kind=tx(word.t==='N'?'kindN':'kindV');
-  $('qCount').textContent=sess.total?tx('count',kind,sess.i,sess.total):tx('countFree',kind,sess.i);
+  $('qCount').innerHTML=esc(sess.total?tx('count',kind,sess.i,sess.total):tx('countFree',kind,sess.i))+(sess.rep&&sess.rep.has(f.i)?' '+repTag():'');
   $('qForm').textContent=f.f;
   const hk=hintCode();
   $('qBreak').innerHTML=q.checked?breakdownHTML(q.best,'full'):(q.hint&&hk?breakdownHTML(hk,q.hint>1?'labels':'split'):'');
@@ -1439,7 +1450,14 @@ function sectionStats(){
   }
   return by.map(a=>{const c=a.filter(Boolean).length;return {n:a.length,c,ok:a.length>=NEED&&c>=PASS}});
 }
-function computedTitle(st){let t=0;for(const x of st){if(x.ok)t++;else break}return t}
+/* nivån: den sparade nivån och sedan en sektion i taget så länge nästa är behärskad. En klarad sektion förblir klarad. */
+function computedTitle(st){let t=Math.min(+PROF.title||0,st.length);while(t<st.length&&st[t].ok)t++;return t}
+/* klarade sektioner där de senaste svaren har sjunkit under kravet: lärt men på väg att glömmas */
+function repSecs(st){st=st||sectionStats();const out=[],t=Math.min(currentTitle(),st.length);for(let i=0;i<t;i++)if(!st[i].ok)out.push(i);return out}
+const REP_ICON='<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M13.2 6.2A5.4 5.4 0 0 0 3.1 5M2.8 9.8A5.4 5.4 0 0 0 12.9 11M3 2.2V5h2.8M13 13.8V11h-2.8"/></svg>';
+const repTag=()=>`<span class="reptag">${REP_ICON}${tx('repTag')}</span>`;
+/* former att repetera ur de klarade sektionerna, högst n stycken */
+function repForms(secs,n){const seen=new Set();return shuffle(secs.flatMap(k=>sectionForms(k))).filter(f=>!seen.has(f.i)&&seen.add(f.i)).slice(0,n)}
 function currentTitle(){return PROF.king_at?KING:Math.max(+PROF.title||0,computedTitle(sectionStats()))}
 function titleProgress(){
   const t=currentTitle();
@@ -1624,6 +1642,9 @@ function renderMe(){
   let h=`<section class="block mehero">
     <p class="me-kick">${tx('yourTitle',t+1,TITLES.length)}</p>
     <h1 class="me-title">${esc(titleName(t))}</h1>${next}</section>`;
+  // repetera: klarade sektioner som börjar glömmas, grupperade för sig
+  const REP=histReady?repSecs():[],stAll=histReady?sectionStats():[];
+  if(REP.length) h+=`<section class="block repblock"><h2>${repTag()}<span>${tx('repH')}</span></h2><p class="sub">${tx('repSub',PASS)}</p><div class="frows">${REP.map(k=>`<div class="frow"><span>${esc(cap(secText(SECTIONS[k])))}</span>${bar(Math.round(Math.min(stAll[k].c,PASS)/PASS*100),'mid')}<b>${stAll[k].c} / ${PASS}</b></div>`).join('')}</div><div class="btnrow"><button class="primary" id="repBtn">${tx('repBtn')}</button></div><p class="me-note" id="repNote" hidden></p></section>`;
   h+=statsHTML();
   // svagheter
   h+=`<section class="block"><h2>${tx('weakH')}</h2>`;
@@ -1638,7 +1659,7 @@ function renderMe(){
     if(confs.length) h+=`<h3 class="me-h3">${tx('confH')}</h3><ul class="clist">${confs.map(c=>`<li><div>${tx('confRow',esc(L[c.f][c.e]).replace('­',''),esc(L[c.f][c.a]).replace('­',''))}</div><span>${tx('confNum',c.n,c.tot,c.p)}</span></li>`).join('')}</ul>`;
     const ph=Object.entries(wk.phen).filter(([,x])=>x.n>=5).map(([k,x])=>({k,n:x.n,p:pct(x.c,x.n)})).sort((a,b)=>a.p-b.p);
     if(ph.length) h+=`<h3 class="me-h3">${tx('phenH')}</h3><div class="frows">${ph.map(x=>`<div class="frow"><span>${esc(phenName(x.k))}</span>${bar(x.p,x.p<70?'low':x.p<85?'mid':'')}<b>${x.p} %</b></div>`).join('')}</div>`;
-    h+=`<div class="btnrow"><button class="primary" id="weakBtn">${tx('practiceWeak')}</button></div><p class="me-note" id="weakNote" hidden></p>`;
+    h+=`<div class="btnrow"><button class="primary" id="weakBtn">${tx('practiceWeak')}</button></div>${REP.length?`<p class="me-note">${tx('repMix')} ${repTag()}</p>`:''}<p class="me-note" id="weakNote" hidden></p>`;
     // senaste felen
     const misses=[];for(let i=HIST.length-1;i>=0&&misses.length<8;i--){const r=HIST[i];if(!r.ok&&rowForm(r)&&!misses.some(m=>m.r.form===r.form&&m.r.lemma===r.lemma))misses.push({r,f:rowForm(r)})}
     h+=`<h3 class="me-h3">${tx('missH2')}</h3>`;
@@ -1671,7 +1692,17 @@ function renderMe(){
   const start=(list,note)=>{if(list.length) startSession(list);else{const n=$(note);n.textContent=tx(FREE()?'noPracticeSec':'noPractice');n.hidden=false}};
   if($('nextBtn')) $('nextBtn').onclick=()=>{const l=sectionForms(sec);if(l.length) startSession(l,{M:secMoments(sec)});else{const n=$('nextNote');n.textContent=tx('noPractice');n.hidden=false}};
   if($('kingBtn')) $('kingBtn').onclick=()=>startSession(null,{king:true});
-  if($('weakBtn')) $('weakBtn').onclick=()=>start(weakForms(),'weakNote');
+  // repetitionsformerna övas med grammatiken t.o.m. den högsta sektionen som repeteras
+  const repM=extra=>{const M=new Set(extra||[]);if(REP.length)secMoments(Math.max(...REP)).forEach(x=>M.add(x));return M};
+  if($('repBtn')) $('repBtn').onclick=()=>{const l=repForms(REP,S.len||20);if(l.length) startSession(l,{M:repM(),rep:new Set(l.map(f=>f.i))});else{const n=$('repNote');n.textContent=tx('noPractice');n.hidden=false}};
+  if($('weakBtn')) $('weakBtn').onclick=()=>{
+    // ungefär en tredjedel av omgången hämtas ur Repetera, resten ur svagheterna
+    const n=S.len||20,r=REP.length?repForms(REP,Math.ceil(n/3)):[],ids=new Set(r.map(f=>f.i));
+    const l=shuffle([...r,...weakForms().filter(f=>!ids.has(f.i)).slice(0,n-r.length)]);
+    if(!l.length) return start(l,'weakNote');
+    // bara formerna som hämtats ur Repetera markeras i övningen
+    startSession(l,r.length?{M:repM(momentSet()),rep:ids}:{});
+  };
   if($('missBtn')) $('missBtn').onclick=()=>startSession(shuffle(MISSES));
   if($('demoUp')) $('demoUp').onclick=()=>KOP.signOut('signup');
   if($('pSave')) $('pSave').onclick=async()=>{const r=await saveProfile({school:$('pSchool').value.trim(),course:$('pCourse').value.trim()});$('pOk').textContent=r.error?tx('errMsg',r.error.message):tx('saved')};
